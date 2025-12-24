@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="Cover letter generator icon">
+  <defs>
+    <!-- soft shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-opacity="0.25"></feDropShadow>
+    </filter>
+
+    <!-- bubble gradients -->
+    <linearGradient id="bubblePurple" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c9a7ff"></stop>
+      <stop offset="1" stop-color="#6f63ff"></stop>
+    </linearGradient>
+    <linearGradient id="bubbleCyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7fe0ff"></stop>
+      <stop offset="1" stop-color="#2d9bff"></stop>
+    </linearGradient>
+
+    <!-- paper gradient -->
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"></stop>
+      <stop offset="1" stop-color="#f2f6ff"></stop>
+    </linearGradient>
+
+    <!-- pencil body -->
+    <linearGradient id="pencilBody" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe08a"></stop>
+      <stop offset="1" stop-color="#f4a300"></stop>
+    </linearGradient>
+    <linearGradient id="pencilEraser" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd2df"></stop>
+      <stop offset="1" stop-color="#f3a8bd"></stop>
+    </linearGradient>
+    <linearGradient id="pencilWood" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7d8b3"></stop>
+      <stop offset="1" stop-color="#d8a777"></stop>
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- back speech bubbles -->
+    <path d="M120 95
+             C75 115, 52 165, 66 212
+             C82 266, 132 294, 188 285
+             L230 322
+             L222 274
+             C255 245, 268 200, 252 155
+             C232 101, 172 74, 120 95Z" fill="url(#bubblePurple)" opacity="0.95"></path>
+
+    <path d="M360 220
+             C350 160, 392 110, 460 105
+             C540 100, 592 150, 586 225
+             C581 290, 525 330, 455 322
+             C430 352, 402 370, 370 377
+             C387 356, 395 335, 398 314
+             C372 295, 364 261, 360 220Z" fill="url(#bubbleCyan)" opacity="0.95"></path>
+
+    <!-- document -->
+    <g>
+      <!-- outer border with fold -->
+      <path d="M220 75
+               H402
+               L445 118
+               V310
+               Q445 325 430 325
+               H220
+               Q205 325 205 310
+               V90
+               Q205 75 220 75Z" fill="url(#paper)" stroke="#153b8e" stroke-width="10" stroke-linejoin="round"></path>
+
+      <!-- folded corner -->
+      <path d="M402 75
+               V118
+               H445
+               Z" fill="#78a8ff" stroke="#153b8e" stroke-width="10" stroke-linejoin="round"></path>
+
+      <!-- avatar box -->
+      <rect x="245" y="105" width="66" height="54" rx="14" fill="#9ad47f" stroke="#6bbf54" stroke-width="4"></rect>
+      <circle cx="278" cy="132" r="12" fill="#ffffff" opacity="0.95"></circle>
+
+      <!-- lines on paper -->
+      <g fill="#bcd2ff">
+        <rect x="330" y="118" width="86" height="10" rx="5"></rect>
+        <rect x="330" y="140" width="70" height="10" rx="5"></rect>
+      </g>
+      <g fill="#bcd2ff" opacity="0.95">
+        <rect x="245" y="178" width="160" height="12" rx="6"></rect>
+        <rect x="245" y="204" width="176" height="12" rx="6"></rect>
+        <rect x="245" y="230" width="168" height="12" rx="6"></rect>
+        <rect x="245" y="256" width="130" height="12" rx="6"></rect>
+      </g>
+    </g>
+
+    <!-- pencil (tilted) -->
+    <g transform="translate(440 120) rotate(18)">
+      <!-- eraser -->
+      <path d="M30 0
+               H110
+               Q122 0 122 12
+               V44
+               Q122 56 110 56
+               H30
+               Q18 56 18 44
+               V12
+               Q18 0 30 0Z" fill="url(#pencilEraser)" stroke="#153b8e" stroke-width="8" stroke-linejoin="round"></path>
+      <!-- metal band -->
+      <rect x="22" y="40" width="96" height="16" rx="8" fill="#c7c9d6" stroke="#153b8e" stroke-width="8"></rect>
+
+      <!-- body -->
+      <path d="M18 56
+               H122
+               V220
+               Q122 236 106 240
+               L70 250
+               Q62 252 54 250
+               L34 244
+               Q18 240 18 224
+               Z" fill="url(#pencilBody)" stroke="#153b8e" stroke-width="8" stroke-linejoin="round"></path>
+
+      <!-- face (angry eyes like the reference) -->
+      <path d="M48 120 L68 114" stroke="#111827" stroke-width="8" stroke-linecap="round"></path>
+      <path d="M92 120 L72 114" stroke="#111827" stroke-width="8" stroke-linecap="round"></path>
+
+      <!-- wood tip -->
+      <path d="M34 244
+               L70 250
+               L106 240
+               L70 310
+               Z" fill="url(#pencilWood)" stroke="#153b8e" stroke-width="8" stroke-linejoin="round"></path>
+
+      <!-- graphite -->
+      <path d="M62 290 L70 310 L78 290 Z" fill="#2f2f2f"></path>
+    </g>
+  </g>
+</svg>

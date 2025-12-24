@@ -1,0 +1,14 @@
+{
+  "name": "express",
+  "type": "module",
+  "dependencies": {
+    "@google/genai": "^1.34.0",
+    "@vercel/node": "^5.5.16",
+    "express": "5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.0",
+    "@types/node": "20.11.17",
+    "typescript": "5.8.3"
+  }
+}
