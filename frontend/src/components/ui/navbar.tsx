@@ -40,37 +40,38 @@ export default function Navbar() {
 
     return (
         <nav className="border-b bg-zinc-950 text-zinc-50 border-zinc-800">
-            <div className="container mx-auto grid grid-cols-3 h-16 items-center px-4">
-                <div className="flex justify-start">
-                    {/* Placeholder for Sidenav trigger */}
+            <div className="w-full flex h-16 items-center justify-between px-4 sm:px-6">
+                {/* Left - Spacer to keep center centered */}
+                <div className="flex-1 flex justify-start">
                 </div>
 
-                <div className="flex justify-center">
-                    <Link to="/" className="flex items-center gap-3 group transition-opacity hover:opacity-90">
-                        <div className="size-9 shrink-0 overflow-hidden">
+                {/* Center - Branding */}
+                <div className="flex-none flex justify-center">
+                    <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
+                        <div className="size-8 sm:size-9 shrink-0 overflow-hidden">
                             <img
                                 src={logo}
                                 alt="Logo"
                                 className="w-full h-full object-contain"
                             />
                         </div>
-                        <div className="flex flex-col justify-center border-l border-zinc-800 pl-3">
-                            <p className="text-[10px] text-zinc-500 font-medium leading-tight uppercase tracking-wider">
+                        <div className="flex flex-col justify-center sm:border-l border-zinc-800 sm:pl-3">
+                            <p className="hidden sm:block text-[10px] text-zinc-500 font-medium leading-tight uppercase tracking-wider">
                                 AI Powered
                             </p>
-                            <h1 className="text-base font-bold leading-tight tracking-tight text-zinc-100">
+                            <h1 className="text-sm sm:text-base font-bold leading-tight tracking-tight text-zinc-100">
                                 Cover Letter Generator
                             </h1>
-
                         </div>
                     </Link>
                 </div>
 
-                <div className="flex justify-end items-center gap-4">
+                {/* Right - Auth Actions */}
+                <div className="flex-1 flex justify-end items-center gap-4">
                     {loading ? (
                         <div className="h-9 w-24 animate-pulse rounded-md bg-zinc-800" />
                     ) : user ? (
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 md:gap-4">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -78,10 +79,10 @@ export default function Navbar() {
                                             to="/"
                                             className="rounded-full ring-offset-zinc-950 transition-all hover:ring-2 hover:ring-zinc-700 hover:ring-offset-2"
                                         >
-                                            <Avatar className="h-9 w-9 border border-zinc-800">
+                                            <Avatar className="size-9 border border-zinc-800">
                                                 <AvatarImage src={getAvatarUrl()} alt={user.email || "User"} />
                                                 <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs font-semibold">
-                                                    {getUserInitials()}
+                                                    {getAvatarUrl() ? "" : getUserInitials()}
                                                 </AvatarFallback>
                                             </Avatar>
                                         </Link>
@@ -97,7 +98,7 @@ export default function Navbar() {
                                 onClick={() => logout()}
                                 variant="ghost"
                                 size="sm"
-                                className="h-9 text-zinc-400 hover:text-red-400 hover:bg-red-950/20 gap-2 px-3"
+                                className="h-9 w-9 md:w-auto text-zinc-400 hover:text-red-400 hover:bg-red-950/20 px-0 md:px-3"
                             >
                                 <IconLogout className="h-4 w-4" />
                             </Button>
