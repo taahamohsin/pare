@@ -4,17 +4,14 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { ItemMedia } from "@/components/ui/item";
 import { jsPDF } from "jspdf";
 import { Copy, FileDown, Sparkles, Check, Loader2 } from "lucide-react";
 import mammoth from "mammoth";
 import * as pdfjsLib from "pdfjs-dist";
 import { toast } from "sonner"
 import { classifyGeminiError } from "@/lib/utils";
-
-import logo from "../assets/logo.svg";
 
 // Initialize PDF.js worker
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -166,20 +163,6 @@ export default function CoverLetterForm() {
     return (
         <div className="flex justify-center min-h-screen px-4 py-12 bg-black">
             <Card className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-[880px] bg-white rounded-xl shadow-lg p-6 sm:p-8">
-                <CardHeader>
-                    <ItemMedia variant="image" className="justify-self-center size-36 [&_img]:object-contain">
-                        <img
-                            src={logo}
-                            alt={'Logo'}
-                            width={100}
-                            height={100}
-                        />
-                    </ItemMedia>
-                    <CardTitle className="text-2xl font-bold text-center">Cover Letter Generator</CardTitle>
-                    <CardDescription className="text-center">
-                        Generate a tailored cover letter for your next role.
-                    </CardDescription>
-                </CardHeader>
                 <CardContent className="space-y-6 w-full">
                     <div className="space-y-2 w-100">
                         <Label htmlFor="resume">Resume (PDF or DOCX)</Label>
