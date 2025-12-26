@@ -17,6 +17,19 @@ import { useCreateCoverLetter } from "@/lib/useCoverLetters";
 import { useAuth } from "@/lib/useAuth";
 import ContentCard from "@/components/ui/content-card";
 import { Document, Packer, Paragraph, TextRun } from "docx";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Initialize PDF.js worker
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -41,6 +54,10 @@ export default function CoverLetterForm() {
     const [isParsing, setIsParsing] = useState<boolean>(false);
     const [fileName, setFileName] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [showSaveDialog, setShowSaveDialog] = useState(false);
+    const [templateName, setTemplateName] = useState("");
+    const [templateDescription, setTemplateDescription] = useState("");
 
     const createMutation = useCreateCoverLetter();
 
@@ -200,18 +217,41 @@ export default function CoverLetterForm() {
         saveAs(blob, `${jobTitle.replace(/\s+/g, "_")}_Cover_Letter.docx`);
     };
 
-    const handleSave = () => {
+    const handleSaveClick = () => {
         if (!user) {
             toast.error("Please sign in to save cover letters");
             return;
         }
+        setShowSaveDialog(true);
+    };
 
-        createMutation.mutate({
-            template_name: jobTitle,
-            template_description: jobDescription,
-            cover_letter_content: coverLetter,
-            resume_text: resumeText,
-        });
+    const handleSaveConfirm = () => {
+        if (!templateName.trim()) {
+            toast.error("Please enter a template name");
+            return;
+        }
+
+        createMutation.mutate(
+            {
+                template_name: templateName.trim(),
+                template_description: templateDescription.trim(),
+                cover_letter_content: coverLetter,
+                resume_text: resumeText,
+            },
+            {
+                onSuccess: () => {
+                    setShowSaveDialog(false);
+                    setTemplateName("");
+                    setTemplateDescription("");
+                },
+            }
+        );
+    };
+
+    const handleSaveCancel = () => {
+        setShowSaveDialog(false);
+        setTemplateName("");
+        setTemplateDescription("");
     };
 
     return (
@@ -326,20 +366,33 @@ export default function CoverLetterForm() {
                                     <FileText className="h-4 w-4 mr-2" />
                                     <span>DOCX</span>
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleSave}
-                                    disabled={!user || createMutation.isPending}
-                                    className="cursor-pointer col-span-2 sm:col-span-1"
-                                >
-                                    {createMutation.isPending ? (
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    ) : (
-                                        <Save className="h-4 w-4 mr-2" />
-                                    )}
-                                    <span>Save Template</span>
-                                </Button>
+                                <TooltipProvider delayDuration={100}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="col-span-2 sm:col-span-1">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={handleSaveClick}
+                                                    disabled={!user || createMutation.isPending}
+                                                    className="cursor-pointer w-full"
+                                                >
+                                                    {createMutation.isPending ? (
+                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                    ) : (
+                                                        <Save className="h-4 w-4 mr-2" />
+                                                    )}
+                                                    <span>Save Template</span>
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        {!user && (
+                                            <TooltipContent>
+                                                <p>Sign in to save templates</p>
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
+                                </TooltipProvider>
                             </div>
                         </div>
                         <Textarea
@@ -351,6 +404,67 @@ export default function CoverLetterForm() {
                     </div>
                 )}
             </div>
+
+            <Dialog open={showSaveDialog} onOpenChange={(open) => !open && handleSaveCancel()}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Save as Template</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="templateName">Template Name *</Label>
+                            <Input
+                                id="templateName"
+                                placeholder="e.g. Senior Frontend Position"
+                                value={templateName}
+                                onChange={(e) => setTemplateName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && templateName.trim()) {
+                                        handleSaveConfirm();
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="templateDescription">Description (optional)</Label>
+                            <Textarea
+                                id="templateDescription"
+                                placeholder="Add notes about this template..."
+                                value={templateDescription}
+                                onChange={(e) => setTemplateDescription(e.target.value)}
+                                className="min-h-[100px]"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleSaveCancel}
+                            disabled={createMutation.isPending}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleSaveConfirm}
+                            disabled={createMutation.isPending || !templateName.trim()}
+                        >
+                            {createMutation.isPending ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save Template
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </ContentCard>
     );
 }

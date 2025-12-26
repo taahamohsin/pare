@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/useAuth";
 import { Link } from "@tanstack/react-router";
+import { IconLogout } from "@tabler/icons-react";
+import { logout } from "@/lib/auth";
 
 export default function Sidenav() {
   const { user } = useAuth();
@@ -26,7 +29,7 @@ export default function Sidenav() {
           <Menu className="h-4 w-4" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] sm:w-[320px]">
+      <SheetContent side="left" className="w-[280px] sm:w-[320px] flex flex-col">
         <nav className="flex flex-col gap-2 mt-6">
           <Link
             to="/"
@@ -52,9 +55,19 @@ export default function Sidenav() {
             <BookmarkIcon className="h-5 w-5" />
             <span className="text-sm">Saved Cover Letters</span>
           </Link>
-
         </nav>
+        <SheetFooter className="mt-auto">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 px-4 py-3 h-auto text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800"
+            onClick={() => logout()}
+          >
+            <IconLogout className="h-5 w-5" />
+            <span className="text-sm">Logout</span>
+          </Button>
+        </SheetFooter>
       </SheetContent>
+
     </Sheet>
   );
 }

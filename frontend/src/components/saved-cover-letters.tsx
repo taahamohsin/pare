@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Loader2, Save, ChevronDown, ChevronUp, Trash2, Pencil } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
 import { Link } from "@tanstack/react-router";
 import type { CoverLetter } from "@/lib/api";
@@ -228,11 +228,11 @@ export default function SavedCoverLetters() {
                                     {editingId !== selectedLetter.id && (
                                         <Button
                                             variant="outline"
-                                            size="sm"
+                                            size="icon"
                                             onClick={() => handleEdit(selectedLetter)}
-                                            className="shrink-0"
+                                            className="shrink-0 h-8 w-8"
                                         >
-                                            Edit
+                                            <Pencil className="h-4 w-4" />
                                         </Button>
                                     )}
                                 </div>

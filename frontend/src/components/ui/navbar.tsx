@@ -71,7 +71,7 @@ export default function Navbar() {
                         <div className="h-9 w-20 sm:w-24 animate-pulse rounded-md bg-zinc-800" />
                     ) : user ? (
                         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
-                            <TooltipProvider>
+                            <TooltipProvider delayDuration={100}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Link
