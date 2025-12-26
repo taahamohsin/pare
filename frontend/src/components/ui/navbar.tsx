@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import SignInButton from "@/components/ui/sign-in-button";
+import Sidenav from "@/components/ui/sidenav";
 import logo from "../../assets/logo.svg";
 
 export default function Navbar() {
@@ -41,11 +42,10 @@ export default function Navbar() {
     return (
         <nav className="border-b bg-zinc-950 text-zinc-50 border-zinc-800 overflow-x-hidden">
             <div className="w-full flex h-16 items-center justify-between px-2 sm:px-4 md:px-6 gap-2">
-                {/* Left - Spacer to keep center centered */}
                 <div className="flex-1 flex justify-start min-w-0">
+                    <Sidenav />
                 </div>
 
-                {/* Center - Branding */}
                 <div className="flex-none flex justify-center">
                     <Link to="/" className="flex items-center gap-2 sm:gap-3 transition-opacity hover:opacity-90">
                         <div className="size-7 sm:size-8 md:size-9 shrink-0 overflow-hidden">
@@ -66,7 +66,6 @@ export default function Navbar() {
                     </Link>
                 </div>
 
-                {/* Right - Auth Actions */}
                 <div className="flex-1 flex justify-end items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
                     {loading ? (
                         <div className="h-9 w-20 sm:w-24 animate-pulse rounded-md bg-zinc-800" />
@@ -93,7 +92,6 @@ export default function Navbar() {
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-
                             <Button
                                 onClick={() => logout()}
                                 variant="ghost"

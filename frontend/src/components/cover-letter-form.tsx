@@ -4,14 +4,16 @@ import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { jsPDF } from "jspdf";
-import { Copy, FileDown, Sparkles, Check, Loader2 } from "lucide-react";
+import { Copy, FileDown, Sparkles, Check, Loader2, Save } from "lucide-react";
 import mammoth from "mammoth";
 import * as pdfjsLib from "pdfjs-dist";
 import { toast } from "sonner"
 import { classifyGeminiError } from "@/lib/utils";
+import { useCreateCoverLetter } from "@/lib/useCoverLetters";
+import { useAuth } from "@/lib/useAuth";
+import ContentCard from "@/components/ui/content-card";
 
 // Initialize PDF.js worker
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -25,6 +27,7 @@ const PROCESSING_STEPS = {
 };
 
 export default function CoverLetterForm() {
+    const { user } = useAuth();
     const [jobTitle, setJobTitle] = useState<string>("");
     const [jobDescription, setJobDescription] = useState<string>("");
     const [coverLetter, setCoverLetter] = useState<string>("");
@@ -35,6 +38,8 @@ export default function CoverLetterForm() {
     const [isParsing, setIsParsing] = useState<boolean>(false);
     const [fileName, setFileName] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const createMutation = useCreateCoverLetter();
 
     const extractTextFromPDF = async (file: File): Promise<string> => {
         const arrayBuffer = await file.arrayBuffer();
@@ -160,115 +165,140 @@ export default function CoverLetterForm() {
         doc.save(`${jobTitle.replace(/\s+/g, "_")}_Cover_Letter.pdf`);
     };
 
+    const handleSave = () => {
+        if (!user) {
+            toast.error("Please sign in to save cover letters");
+            return;
+        }
+
+        createMutation.mutate({
+            template_name: jobTitle,
+            template_description: jobDescription,
+            cover_letter_content: coverLetter,
+            resume_text: resumeText,
+        });
+    };
+
     return (
-        <div className="flex justify-center min-h-full px-4 py-6 sm:py-8 md:py-12 bg-black">
-            <Card className="w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-[880px] bg-white rounded-xl shadow-lg p-4 sm:p-6 md:p-8 my-auto">
-                <CardContent className="space-y-6 w-full p-0">
-                    <div className="space-y-2 w-50">
-                        <Label htmlFor="resume">Resume (PDF or DOCX)</Label>
-                        <div className="flex items-center space-x-2 w-full">
-                            <Input
-                                id="resume"
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf,.docx"
-                                onChange={handleFileUpload}
-                                className="cursor-pointer file:cursor-pointer bg-black text-gray-400 file:text-white"
-                                disabled={isParsing || generateMutation.isPending}
-                            />
-                            {isParsing && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                        </div>
-                        {resumeText && !isParsing && (
-                            <div className="text-xs text-green-600 flex items-center mt-1">
-                                <Check className="h-3 w-3 mr-1" /> Resume parsed successfully ({resumeText.length} chars)
-                            </div>
-                        )}
-                        {fileName && !resumeText && !isParsing && (
-                            <div className="text-xs text-red-500 flex items-center mt-1">
-                                Failed to parse content from {fileName}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="jobTitle">Job Title</Label>
+        <ContentCard footer="Built for software engineers.">
+            <div className="space-y-6 w-full">
+                <div className="space-y-2">
+                    <Label htmlFor="resume">Resume (PDF or DOCX)</Label>
+                    <div className="flex items-center space-x-2 w-50">
                         <Input
-                            id="jobTitle"
-                            placeholder="e.g. Senior Frontend Engineer"
-                            value={jobTitle}
-                            onChange={(e) => setJobTitle(e.target.value)}
+                            id="resume"
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".pdf,.docx"
+                            onChange={handleFileUpload}
+                            className="cursor-pointer file:cursor-pointer bg-black text-gray-400 file:text-white"
                             disabled={isParsing || generateMutation.isPending}
                         />
+                        {isParsing && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                     </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="jobDescription">Job Description/Key Requirements</Label>
-                        <Textarea
-                            id="jobDescription"
-                            placeholder="Paste the job requirements here..."
-                            className="min-h-[120px]"
-                            value={jobDescription}
-                            onChange={(e) => setJobDescription(e.target.value)}
-                            disabled={isParsing || generateMutation.isPending}
-                        />
-                    </div>
-
-                    <div className="flex justify-center sticky bottom-0 space-x-2 flex-wrap gap-2">
-                        <Button
-                            className="flex-1 sm:flex-none cursor-pointer min-w-fit h-10"
-                            onClick={handleGenerate}
-                            disabled={!jobTitle || !jobDescription || generateMutation.isPending || isParsing || fileName.length === 0}
-                        >
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            <span className={step ? "animate-pulse" : ""}>{step ?? "Generate Cover Letter"}</span>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={handleReset}
-                            disabled={!jobTitle && !jobDescription && !resumeText && !coverLetter}
-                            className="cursor-pointer h-10 border-slate-600 text-slate-800 font-medium hover:bg-slate-100 disabled:opacity-50"
-                        >
-                            Reset
-                        </Button>
-                    </div>
-
-                    {coverLetter && (
-                        <div className="space-y-2 pt-4 border-t">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="output">Generated Cover Letter</Label>
-                                <div className="flex space-x-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleCopy}
-                                        className="cursor-pointer"
-                                    >
-                                        {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                                        {copied ? "Copied" : "Copy"}
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleExportPDF}
-                                        className="cursor-pointer"
-                                    >
-                                        <FileDown className="h-4 w-4 mr-1" /> PDF
-                                    </Button>
-                                </div>
-                            </div>
-                            <Textarea
-                                id="output"
-                                className="min-h-[300px] font-mono text-sm leading-relaxed"
-                                value={coverLetter}
-                                onChange={(e) => setCoverLetter(e.target.value)}
-                            />
+                    {resumeText && !isParsing && (
+                        <div className="text-xs text-green-600 flex items-center mt-1">
+                            <Check className="h-3 w-3 mr-1" /> Resume parsed successfully ({resumeText.length} chars)
                         </div>
                     )}
-                </CardContent>
-                <CardFooter className="justify-center text-sm text-muted-foreground">
-                    Built for software engineers.
-                </CardFooter>
-            </Card>
-        </div>
+                    {fileName && !resumeText && !isParsing && (
+                        <div className="text-xs text-red-500 flex items-center mt-1">
+                            Failed to parse content from {fileName}
+                        </div>
+                    )}
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="jobTitle">Job Title</Label>
+                    <Input
+                        id="jobTitle"
+                        placeholder="e.g. Senior Frontend Engineer"
+                        value={jobTitle}
+                        onChange={(e) => setJobTitle(e.target.value)}
+                        disabled={isParsing || generateMutation.isPending}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="jobDescription">Job Description/Key Requirements</Label>
+                    <Textarea
+                        id="jobDescription"
+                        placeholder="Paste the job requirements here..."
+                        className="min-h-[120px]"
+                        value={jobDescription}
+                        onChange={(e) => setJobDescription(e.target.value)}
+                        disabled={isParsing || generateMutation.isPending}
+                    />
+                </div>
+
+                <div className="flex justify-center sticky bottom-0 space-x-2 flex-wrap gap-2">
+                    <Button
+                        className="flex-1 sm:flex-none cursor-pointer min-w-fit h-10"
+                        onClick={handleGenerate}
+                        disabled={!jobTitle || !jobDescription || generateMutation.isPending || isParsing || fileName.length === 0}
+                    >
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        <span className={step ? "animate-pulse" : ""}>{step ?? "Generate Cover Letter"}</span>
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={handleReset}
+                        disabled={!jobTitle && !jobDescription && !resumeText && !coverLetter}
+                        className="cursor-pointer h-10 border-slate-600 text-slate-800 font-medium hover:bg-slate-100 disabled:opacity-50"
+                    >
+                        Reset
+                    </Button>
+                </div>
+
+                {coverLetter && (
+                    <div className="space-y-2 pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="output">Generated Cover Letter</Label>
+                            <div className="flex space-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCopy}
+                                    className="cursor-pointer"
+                                >
+                                    {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                                    {copied ? "Copied" : "Copy"}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleExportPDF}
+                                    className="cursor-pointer"
+                                >
+                                    <FileDown className="h-4 w-4 mr-1" /> PDF
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleSave}
+                                    disabled={!user || createMutation.isPending}
+                                    className="cursor-pointer"
+                                >
+                                    {createMutation.isPending ? (
+                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4 mr-1" />
+                                            Save As Template
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                        <Textarea
+                            id="output"
+                            className="min-h-[300px] font-mono text-sm leading-relaxed"
+                            value={coverLetter}
+                            onChange={(e) => setCoverLetter(e.target.value)}
+                        />
+                    </div>
+                )}
+            </div>
+        </ContentCard>
     );
 }

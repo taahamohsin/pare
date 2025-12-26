@@ -21,8 +21,8 @@ export async function generateCoverLetter(jobTitle: string, jobDescription: stri
       The cover letter MUST include the following sections in this exact order:
       1. Header block (top-left, plain text, no styling):
         - Hiring Manager or Hiring Team (use "Hiring Manager" if unknown)
-        - Company name
-        - Company location (city/state if available, otherwise omit)
+        - Company name: ONLY include if explicitly stated in the job description. If not found, SKIP this line entirely. NEVER write "Company name", "[Company Name]", or any placeholder.
+        - Company location: ONLY include if city/state are explicitly stated in the job description. If not found, SKIP this line entirely. NEVER write "Company location", "[City, State]", or any placeholder.
         - Today's date ${new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })} in MM/DD/YYYY format
 
       2. Salutation line:
