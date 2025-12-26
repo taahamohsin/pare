@@ -165,6 +165,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is open source and available under the MIT License.
 
+## Planned Features
+
+- Support for other models/providers
+- Support for storing and choosing from uploaded resumes
+
 ## Acknowledgments
 
 - Built with [shadcn/ui](https://ui.shadcn.com/)
