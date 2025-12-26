@@ -6,14 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { jsPDF } from "jspdf";
-import { Copy, FileDown, Sparkles, Check, Loader2, Save } from "lucide-react";
+import { Copy, FileDown, Sparkles, Check, Loader2, Save, FileText } from "lucide-react";
 import mammoth from "mammoth";
 import * as pdfjsLib from "pdfjs-dist";
 import { toast } from "sonner"
+import { saveAs } from "file-saver";
+
 import { classifyGeminiError } from "@/lib/utils";
 import { useCreateCoverLetter } from "@/lib/useCoverLetters";
 import { useAuth } from "@/lib/useAuth";
 import ContentCard from "@/components/ui/content-card";
+import { Document, Packer, Paragraph, TextRun } from "docx";
 
 // Initialize PDF.js worker
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -165,6 +168,38 @@ export default function CoverLetterForm() {
         doc.save(`${jobTitle.replace(/\s+/g, "_")}_Cover_Letter.pdf`);
     };
 
+    const handleExportDocx = async () => {
+        if (!coverLetter) return;
+
+        // Split cover letter into paragraphs
+        const paragraphs = coverLetter.split('\n').filter(line => line.trim() !== '');
+
+        // Create document with paragraphs
+        const doc = new Document({
+            sections: [{
+                properties: {},
+                children: paragraphs.map(paragraphText =>
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: paragraphText,
+                                font: "Calibri",
+                                size: 24, // 12pt in half-points
+                            }),
+                        ],
+                        spacing: {
+                            after: 200, // spacing after paragraph
+                        },
+                    })
+                ),
+            }],
+        });
+
+        // Generate and download the document
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, `${jobTitle.replace(/\s+/g, "_")}_Cover_Letter.docx`);
+    };
+
     const handleSave = () => {
         if (!user) {
             toast.error("Please sign in to save cover letters");
@@ -251,18 +286,27 @@ export default function CoverLetterForm() {
                 </div>
 
                 {coverLetter && (
-                    <div className="space-y-2 pt-4 border-t">
-                        <div className="flex items-center justify-between">
-                            <Label htmlFor="output">Generated Cover Letter</Label>
-                            <div className="flex space-x-2">
+                    <div className="space-y-3 pt-4 border-t">
+                        <div className="flex flex-col gap-3">
+                            <Label htmlFor="output" className="text-base font-semibold">Generated Cover Letter</Label>
+                            <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={handleCopy}
                                     className="cursor-pointer"
                                 >
-                                    {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                                    {copied ? "Copied" : "Copy"}
+                                    {copied ? (
+                                        <>
+                                            <Check className="h-4 w-4 mr-2" />
+                                            <span>Copied</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="h-4 w-4 mr-2" />
+                                            <span>Copy</span>
+                                        </>
+                                    )}
                                 </Button>
                                 <Button
                                     variant="outline"
@@ -270,23 +314,31 @@ export default function CoverLetterForm() {
                                     onClick={handleExportPDF}
                                     className="cursor-pointer"
                                 >
-                                    <FileDown className="h-4 w-4 mr-1" /> PDF
+                                    <FileDown className="h-4 w-4 mr-2" />
+                                    <span>PDF</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleExportDocx}
+                                    className="cursor-pointer"
+                                >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    <span>DOCX</span>
                                 </Button>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={handleSave}
                                     disabled={!user || createMutation.isPending}
-                                    className="cursor-pointer"
+                                    className="cursor-pointer col-span-2 sm:col-span-1"
                                 >
                                     {createMutation.isPending ? (
-                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                     ) : (
-                                        <>
-                                            <Save className="h-4 w-4 mr-1" />
-                                            Save As Template
-                                        </>
+                                        <Save className="h-4 w-4 mr-2" />
                                     )}
+                                    <span>Save Template</span>
                                 </Button>
                             </div>
                         </div>
