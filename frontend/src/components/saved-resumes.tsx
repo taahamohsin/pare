@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useResumes, useDeleteResume, useUpdateResume, useResume } from "@/lib/useResumes";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import TruncatedTooltip from "./ui/truncated-tooltip";
 export default function SavedResumes() {
     const { user, loading: authLoading } = useAuth();
     const { data, isLoading, isFetching, error } = useResumes(undefined, undefined, true);
+    const existingFileNames = useMemo(() => new Set(data?.data.map((r) => r.filename)), [data]);
     const deleteMutation = useDeleteResume();
     const updateMutation = useUpdateResume();
 
@@ -392,6 +393,7 @@ export default function SavedResumes() {
                 open={isUploadDialogOpen}
                 onOpenChange={setIsUploadDialogOpen}
                 isAuthenticated={!!user}
+                existingFileNames={existingFileNames}
             />
 
             <AlertDialog open={!!deleteConfirmId} onOpenChange={(open: boolean) => !open && setDeleteConfirmId(null)}>

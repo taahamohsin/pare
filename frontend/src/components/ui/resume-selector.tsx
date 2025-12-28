@@ -32,6 +32,7 @@ export default function ResumeSelector({
 
   const resumes = resumesData?.data || [];
   const defaultResume = useMemo(() => resumes.find((r) => r.is_default), [resumes]);
+  const existingFileNames = useMemo(() => new Set(resumes.map((r) => r.filename)), [resumes]);
   const isLoading = authLoading || isLoadingResumes;
   const hasResumes = useMemo(() => !isLoading && resumes.length > 0, [isLoading, resumes]);
 
@@ -191,6 +192,7 @@ export default function ResumeSelector({
         onOpenChange={setIsUploadDialogOpen}
         onUploadSuccess={(resume) => onResumeSelected(resume.resume_text, resume.id, resume.original_filename)}
         isAuthenticated={!!user}
+        existingFileNames={existingFileNames}
       />
     </div >
   );

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import { useResumes, useUploadResume } from "@/lib/useResumes";
 import { toast } from "sonner";
 import type { Resume } from "@/lib/api";
@@ -12,6 +12,7 @@ interface ResumeUploadDialogProps {
     onOpenChange: (open: boolean) => void;
     onUploadSuccess?: (resume: Resume) => void;
     isAuthenticated: boolean;
+    existingFileNames: Set<string>;
 }
 
 export function ResumeUploadDialog({
@@ -19,23 +20,25 @@ export function ResumeUploadDialog({
     onOpenChange,
     onUploadSuccess,
     isAuthenticated,
+    existingFileNames,
 }: ResumeUploadDialogProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [setAsDefault, setSetAsDefault] = useState(false);
+    const [setAsDefault, setSetAsDefault] = useState<boolean>(false);
 
-    const { data: resumesData } = useResumes();
+    const { data: resumesData } = useResumes(undefined, undefined, isAuthenticated);
     const resumes = resumesData?.data || [];
+    const hasDefaultResume = useMemo(() => resumes.length > 0 && resumes.some((r) => r.is_default), [resumes]);
+    const isForcedDefault = !hasDefaultResume && isAuthenticated;
     const uploadMutation = useUploadResume();
-
-    useEffect(() => {
-        if (resumes.length === 0) {
-            setSetAsDefault(true);
-        }
-    }, [resumes]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        if (existingFileNames.has(file.name)) {
+            toast.error("File with this name already exists");
+            return;
+        }
 
         if (
             file.type !== "application/pdf" &&
@@ -59,18 +62,16 @@ export function ResumeUploadDialog({
         try {
             const resume = await uploadMutation.mutateAsync({
                 file: selectedFile,
-                is_default: setAsDefault,
+                is_default: setAsDefault || isForcedDefault,
             });
 
             if (onUploadSuccess) {
                 onUploadSuccess(resume);
             }
 
+            setSetAsDefault(false);
             onOpenChange(false);
             setSelectedFile(null);
-            if (resumes.length > 0) {
-                setSetAsDefault(false);
-            }
         } catch (error) {
             // Error handled in mutation
         }
@@ -84,7 +85,13 @@ export function ResumeUploadDialog({
                 </DialogHeader>
                 <div className="space-y-4 mt-4 max-w-full overflow-x-hidden">
                     <div>
-                        <Label htmlFor="resume-file">Select File (PDF or DOCX)</Label>
+                        <div className="flex items-center space-x-2">
+                            <Label htmlFor="resume-file">Select File</Label>
+                            <span className="bg-amber-500 text-black px-2 py-1 rounded-lg text-xs flex gap-2">
+                                <Info className="h-4 w-4 flex" />
+                                <span>Files must be either PDF or DOCX and up to 5 MB</span>
+                            </span>
+                        </div>
                         <input
                             id="resume-file"
                             type="file"
@@ -93,14 +100,16 @@ export function ResumeUploadDialog({
                             className="mt-2 block w-full text-sm text-zinc-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 cursor-pointer"
                         />
 
+
+
                     </div>
                     {isAuthenticated &&
                         <div className="flex items-center space-x-2">
                             <input
                                 type="checkbox"
                                 id="set-default"
-                                checked={setAsDefault}
-                                disabled={resumes.length === 0}
+                                checked={setAsDefault || isForcedDefault}
+                                disabled={isForcedDefault}
                                 onChange={(e) => setSetAsDefault(e.target.checked)}
                                 className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
                             />
@@ -117,9 +126,6 @@ export function ResumeUploadDialog({
                             onClick={() => {
                                 onOpenChange(false);
                                 setSelectedFile(null);
-                                if (resumes.length > 0) {
-                                    setSetAsDefault(false);
-                                }
                             }}
                             disabled={uploadMutation.isPending}
                         >
@@ -132,6 +138,6 @@ export function ResumeUploadDialog({
                     </div>
                 </div>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
