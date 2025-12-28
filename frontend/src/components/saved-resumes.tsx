@@ -28,6 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResumeUploadDialog } from "@/components/ui/resume-upload-dialog";
 import { Badge } from "@/components/ui/badge";
+import TruncatedTooltip from "./ui/truncated-tooltip";
 
 export default function SavedResumes() {
     const { user, loading: authLoading } = useAuth();
@@ -164,7 +165,7 @@ export default function SavedResumes() {
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4 h-full">
                         {resumes.map((resume) => (
                             <Card
                                 key={resume.id}
@@ -176,10 +177,13 @@ export default function SavedResumes() {
                                         <div className="flex-1 min-w-0 space-y-1">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 <FileText className="h-4 w-4 text-zinc-500 flex-shrink-0" />
-                                                <CardTitle className="text-lg truncate font-semibold w-75">
-                                                    {resume.original_filename}
+                                                <CardTitle className="text-lg flex-1 min-w-0 max-w-70 truncate block">
+                                                    <TruncatedTooltip
+                                                        text={resume.original_filename}
+                                                        className="text-base font-medium"
+                                                        side="top"
+                                                    />
                                                 </CardTitle>
-
                                             </div>
                                             <p className="text-xs text-zinc-500">
                                                 Added: {new Date(resume.created_at).toLocaleDateString()} • {(resume.file_size / 1024).toFixed(0)} KB
@@ -197,7 +201,7 @@ export default function SavedResumes() {
                                                 </Button>
                                             )}
                                             {resume.is_default && (
-                                                <Badge className="bg-blue-600 hover:bg-blue-700 flex-shrink-0 h-5 px-1.5 text-[10px] text-white border-0">
+                                                <Badge className="bg-blue-600 flex-shrink-0 h-5 px-1.5 text-[10px] text-white border-0 cursor-default">
                                                     Default
                                                 </Badge>
                                             )}
@@ -205,7 +209,7 @@ export default function SavedResumes() {
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={(e) => handleDeleteClick(e, resume.id)}
-                                                className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50"
+                                                className="h-8 w-8 hover:text-red-600 hover:bg-red-50"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
@@ -216,7 +220,7 @@ export default function SavedResumes() {
                         ))}
                     </div>
                 )}
-            </ContentCard >
+            </ContentCard>
 
             <Dialog open={!!selectedResumeId} onOpenChange={(open) => !open && handleCloseDialog()}>
                 <DialogContent className="w-[94vw] sm:w-full max-w-4xl max-h-[90vh] overflow-y-auto pt-10 sm:pt-6 overflow-x-hidden">
@@ -241,14 +245,14 @@ export default function SavedResumes() {
                                                 size="sm"
                                                 onClick={() => window.open(fullResume.download_url, '_blank')}
                                             >
-                                                <Download className="mr-2 h-4 w-4" />
+                                                <Download className="h-4 w-4" />
                                             </Button>
                                         )}
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={(e) => handleDeleteClick(e, fullResume.id)}
-                                            className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50"
+                                            className="h-8 w-8 hover:text-red-600 hover:bg-red-50"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
@@ -272,7 +276,7 @@ export default function SavedResumes() {
                                     </div>
                                     <div>
                                         <p className="text-zinc-500">Status</p>
-                                        <p className="font-medium">{fullResume.is_default ? "Default" : "Secondary"}</p>
+                                        <p className="font-medium"><Badge className={`bg-${fullResume.is_default ? "blue-600" : "zinc-900"} flex-shrink-0 h-5 px-1.5 text-[10px] text-white border-0 cursor-default`}>{fullResume.is_default ? "Default" : "Secondary"}</Badge></p>
                                     </div>
                                 </div>
 

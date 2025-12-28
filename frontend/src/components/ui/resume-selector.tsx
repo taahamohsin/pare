@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,7 @@ import { FileText, Upload, ChevronDown, Check, Loader2 } from "lucide-react";
 import { useResumes } from "@/lib/useResumes";
 import { useAuth } from "@/lib/useAuth";
 import { ResumeUploadDialog } from "./resume-upload-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import TruncatedTooltip from "./truncated-tooltip";
 
 interface ResumeSelectorProps {
   onResumeSelected: (resumeText: string, resumeId: string, filename: string) => void;
@@ -15,35 +15,6 @@ interface ResumeSelectorProps {
   className?: string;
 }
 
-function TruncatedTooltip({ text, className, side = "right" }: { text: string; className?: string; side?: "top" | "bottom" | "left" | "right" }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const textRef = useRef<HTMLSpanElement>(null);
-
-  const handleOpenChange = (open: boolean) => {
-    if (open) {
-      if (textRef.current && textRef.current.scrollWidth > textRef.current.clientWidth) {
-        setIsOpen(true);
-      }
-    } else {
-      setIsOpen(false);
-    }
-  };
-
-  return (
-    <TooltipProvider delayDuration={100}>
-      <Tooltip open={isOpen} onOpenChange={handleOpenChange}>
-        <TooltipTrigger asChild>
-          <span ref={textRef} className={className}>
-            {text}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side={side} className="bg-zinc-900 border-zinc-800 text-zinc-100 p-2 shadow-xl max-w-[300px] break-all">
-          <p className="font-semibold text-xs">{text}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 export default function ResumeSelector({
   onResumeSelected,
@@ -54,12 +25,13 @@ export default function ResumeSelector({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data: resumesData, isLoading: isLoadingResumes } = useResumes(undefined, undefined, !!user);
 
   const resumes = resumesData?.data || [];
   const defaultResume = resumes.find((r) => r.is_default);
-  const hasResumes = useMemo(() => !isLoadingResumes && resumes.length > 0, [isLoadingResumes, resumes]);
+  const isLoading = authLoading || isLoadingResumes;
+  const hasResumes = useMemo(() => !isLoading && resumes.length > 0, [isLoading, resumes]);
 
   const handleSelectResume = (resumeId: string) => {
     const resume = resumes.find((r) => r.id === resumeId);
@@ -130,14 +102,24 @@ export default function ResumeSelector({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      ) : (!user || !hasResumes) && !isLoadingResumes ? (
+      ) : (!user || !hasResumes) ? (
         <Button
           variant="outline"
-          className="w-full mt-2 bg-black text-white hover:bg-primary/90 h-11"
+          className="w-full mt-2 bg-black text-white hover:text-white hover:bg-primary/90 h-11"
           onClick={() => setIsUploadDialogOpen(true)}
+          disabled={isLoading}
         >
-          <Upload className="mr-2 h-5 w-5" />
-          Upload Resume
+          {isLoading ?
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              Loading...
+            </>
+            : (
+              <>
+                <Upload className="mr-2 h-5 w-5" />
+                Upload Resume
+              </>
+            )}
         </Button>
       ) : (
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>

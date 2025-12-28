@@ -61,13 +61,11 @@ async function handleUpload(req: AuthenticatedRequest, res: VercelResponse) {
         const buffer = Buffer.from(await fileData.arrayBuffer());
         const extension = filename.split('.').pop()?.toLowerCase();
 
-        console.log("Extension:", extension);
         if (extension === 'pdf') {
           resume_text = await extractTextFromPdf(buffer);
         } else if (extension === 'docx') {
           resume_text = await extractTextFromDocx(buffer);
         }
-        console.log("Resume text:", resume_text);
       } else if (downloadError) {
         console.error("Error downloading file for parsing:", downloadError);
       }
