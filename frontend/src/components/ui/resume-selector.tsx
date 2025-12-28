@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ interface ResumeSelectorProps {
   onResumeSelected: (resumeText: string, resumeId: string, filename: string) => void;
   selectedResumeId?: string;
   selectedFileName?: string;
+  setResumeFileName: (filename: string) => void;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export default function ResumeSelector({
   onResumeSelected,
   selectedResumeId,
   selectedFileName,
+  setResumeFileName,
   className = "",
 }: ResumeSelectorProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -29,7 +31,7 @@ export default function ResumeSelector({
   const { data: resumesData, isLoading: isLoadingResumes } = useResumes(undefined, undefined, !!user);
 
   const resumes = resumesData?.data || [];
-  const defaultResume = resumes.find((r) => r.is_default);
+  const defaultResume = useMemo(() => resumes.find((r) => r.is_default), [resumes]);
   const isLoading = authLoading || isLoadingResumes;
   const hasResumes = useMemo(() => !isLoading && resumes.length > 0, [isLoading, resumes]);
 
@@ -40,6 +42,13 @@ export default function ResumeSelector({
       setIsDropdownOpen(false);
     }
   };
+
+  useEffect(() => {
+    if (defaultResume) {
+      handleSelectResume(defaultResume.id);
+      setResumeFileName(defaultResume.original_filename);
+    }
+  }, [defaultResume]);
 
   return (
     <div className={className}>

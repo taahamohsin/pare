@@ -161,6 +161,7 @@ export default function CoverLetterForm() {
                     onResumeSelected={handleResumeSelected}
                     selectedResumeId={selectedResumeId || undefined}
                     selectedFileName={resumeFileName}
+                    setResumeFileName={setResumeFileName}
                     className="w-75"
                 />
                 <div className="space-y-2">
