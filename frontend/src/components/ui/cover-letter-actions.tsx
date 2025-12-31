@@ -28,11 +28,8 @@ export default function CoverLetterActions({ content, filename, className = "" }
         const doc = new jsPDF();
         doc.setFont("helvetica", "normal");
         doc.setFontSize(12);
-
-        // Split text to fit page
         const splitText = doc.splitTextToSize(content, 180);
         doc.text(splitText, 15, 20);
-
         doc.save(`${filename}_Cover_Letter.pdf`);
         toast.success("PDF downloaded!");
     };
@@ -40,10 +37,7 @@ export default function CoverLetterActions({ content, filename, className = "" }
     const handleExportDocx = async () => {
         if (!content) return;
 
-        // Split cover letter into paragraphs
         const paragraphs = content.split('\n').filter(line => line.trim() !== '');
-
-        // Create document with paragraphs
         const doc = new Document({
             sections: [{
                 properties: {},
@@ -53,18 +47,17 @@ export default function CoverLetterActions({ content, filename, className = "" }
                             new TextRun({
                                 text: paragraphText,
                                 font: "Calibri",
-                                size: 24, // 12pt in half-points
+                                size: 24,
                             }),
                         ],
                         spacing: {
-                            after: 200, // spacing after paragraph
+                            after: 200,
                         },
                     })
                 ),
             }],
         });
 
-        // Generate and download the document
         const blob = await Packer.toBlob(doc);
         saveAs(blob, `${filename}_Cover_Letter.docx`);
         toast.success("DOCX downloaded!");

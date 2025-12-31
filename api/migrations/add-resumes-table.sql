@@ -1,5 +1,4 @@
 -- Migration: Add resumes table and update cover_letters table
--- Purpose: Enable persistent resume storage with Supabase Storage integration
 
 -- Create resumes table
 CREATE TABLE IF NOT EXISTS resumes (

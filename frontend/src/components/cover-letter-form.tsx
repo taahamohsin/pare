@@ -1,19 +1,21 @@
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Loader2, Save } from "lucide-react";
+import { Sparkles, Loader2, Save, MessageSquareText, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
-import { classifyGeminiError } from "@/lib/utils";
+import { generateCoverLetter as apiGenerateCoverLetter } from "@/lib/api";
+import type { CustomPrompt } from "@/lib/api";
 import { useCreateCoverLetter } from "@/lib/useCoverLetters";
 import { useAuth } from "@/lib/useAuth";
 import ContentCard from "@/components/ui/content-card";
 import CoverLetterActions from "@/components/ui/cover-letter-actions";
 import ResumeSelector from "@/components/ui/resume-selector";
+import { CustomPromptDialog } from "@/components/ui/custom-prompt-dialog";
 import {
     Dialog,
     DialogContent,
@@ -46,8 +48,11 @@ export default function CoverLetterForm() {
     const [resumeFileName, setResumeFileName] = useState<string>("");
 
     const [showSaveDialog, setShowSaveDialog] = useState(false);
+    const [showCustomPromptDialog, setShowCustomPromptDialog] = useState(false);
     const [templateName, setTemplateName] = useState("");
     const [templateDescription, setTemplateDescription] = useState("");
+    const [promptOverride, setPromptOverride] = useState<string | undefined>(undefined);
+    const [selectedPrompt, setSelectedPrompt] = useState<CustomPrompt | null>(null);
 
     const createMutation = useCreateCoverLetter();
 
@@ -57,29 +62,13 @@ export default function CoverLetterForm() {
         setResumeFileName(filename);
     };
 
+
     const generateMutation = useMutation({
-        mutationFn: async (data: { jobTitle: string; jobDescription: string; resumeText: string }) => {
-            const response = await fetch('/api/generate-cover-letter', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            });
-
-            if (!response.ok) {
-                const errorCategory = classifyGeminiError(response.body);
-                if (errorCategory === "rate_limit") {
-                    throw new Error("Rate limit exceeded. Please try again later.");
-                } else {
-                    throw new Error("Failed to generate cover letter. Please try again.");
-                }
-            }
-
-            return response.text();
+        mutationFn: async (data: { jobTitle: string; jobDescription: string; resumeText: string; promptOverride?: string }) => {
+            return apiGenerateCoverLetter(data);
         },
         onSuccess: (data) => {
-            setCoverLetter(data!);
+            setCoverLetter(data);
             setStep(null);
             toast.success("Cover letter generated successfully!")
         },
@@ -88,6 +77,10 @@ export default function CoverLetterForm() {
             toast.error(error.message || "Failed to generate cover letter. Please try again.")
         }
     });
+
+    const isFormReady: boolean = useMemo(() => {
+        return !!jobTitle && !!jobDescription && !!selectedResumeId && !generateMutation.isPending;
+    }, [jobTitle, jobDescription, selectedResumeId, generateMutation.isPending]);
 
     const handleGenerate = () => {
         setCoverLetter("");
@@ -98,7 +91,8 @@ export default function CoverLetterForm() {
         generateMutation.mutate({
             jobTitle,
             jobDescription,
-            resumeText
+            resumeText,
+            promptOverride
         });
     };
 
@@ -109,6 +103,7 @@ export default function CoverLetterForm() {
         setResumeText("");
         setSelectedResumeId(null);
         setResumeFileName("");
+        setPromptOverride(undefined);
         if (step) setStep(null);
     };
 
@@ -186,11 +181,30 @@ export default function CoverLetterForm() {
                         disabled={generateMutation.isPending}
                     />
                 </div>
+                <div className="flex flex-col gap-1.5 w-75">
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowCustomPromptDialog(true)}
+                        disabled={generateMutation.isPending}
+                        className="w-full sm:w-auto cursor-pointer h-10 min-w-[170px] justify-between group  hover:border-slate-400 hover:bg-slate-50"
+                    >
+                        <div className="flex items-center gap-2 overflow-hidden">
+                            <MessageSquareText className="h-4 w-4 shrink-0 text-slate-500 group-hover:text-slate-700" />
+                            <div className="flex flex-col items-start text-xs text-left overflow-hidden">
+                                <span className="font-medium text-zinc-800 text-sm truncate max-w-[120px]">
+                                    {selectedPrompt?.name || "System Default"}
+                                </span>
+                            </div>
+                        </div>
+                        <ChevronDown className="h-3 w-3 text-slate-400 ml-2 shrink-0" />
+                    </Button>
+                </div>
+
                 <div className="flex justify-center sticky bottom-0 space-x-2 flex-wrap gap-2">
                     <Button
                         className="flex-1 sm:flex-none cursor-pointer min-w-fit h-10"
                         onClick={handleGenerate}
-                        disabled={!jobTitle || !jobDescription || !selectedResumeId || generateMutation.isPending}
+                        disabled={!isFormReady}
                     >
                         <Sparkles className="mr-2 h-4 w-4" />
                         <span className={step ? "animate-pulse" : ""}>{step ?? "Generate Cover Letter"}</span>
@@ -314,6 +328,18 @@ export default function CoverLetterForm() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </ContentCard>
+
+            <CustomPromptDialog
+                open={showCustomPromptDialog}
+                onOpenChange={setShowCustomPromptDialog}
+                onSelectPrompt={(p) => {
+                    setPromptOverride(p.prompt_text);
+                    setSelectedPrompt(p);
+                    setShowCustomPromptDialog(false);
+                    toast.success(`Selected prompt: ${p.name}`);
+                }}
+                isAuthenticated={!!user}
+            />
+        </ContentCard >
     );
 }

@@ -9,9 +9,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import SignInButton from "@/components/ui/sign-in-button";
 import Sidenav from "@/components/ui/sidenav";
 import logo from "../../assets/logo.svg";
+import { useState } from "react";
 
 export default function Navbar() {
     const { user, loading } = useAuth();
+    const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
 
     const getAvatarUrl = () => {
         if (user?.user_metadata?.avatar_url) {
@@ -67,7 +69,7 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex-1 flex justify-end items-center gap-2 sm:gap-3 md:gap-4 min-w-0">
-                    {loading ? (
+                    {loading || isSigningIn ? (
                         <div className="h-9 w-20 sm:w-24 animate-pulse rounded-md bg-zinc-800" />
                     ) : user ? (
                         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
@@ -102,7 +104,7 @@ export default function Navbar() {
                             </Button>
                         </div>
                     ) : (
-                        <SignInButton />
+                        <SignInButton setIsSigningIn={setIsSigningIn} />
                     )}
                 </div>
             </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, User, BookmarkIcon, Home, BookTextIcon } from "lucide-react";
+import { Menu, User, BookmarkIcon, Home, BookTextIcon, MessageSquareIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -62,6 +62,14 @@ export default function Sidenav() {
           >
             <BookTextIcon className="h-5 w-5" />
             <span className="text-sm">Saved Resumes</span>
+          </Link>
+          <Link
+            to="/custom-prompts"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 transition-colors"
+          >
+            <MessageSquareIcon className="h-5 w-5" />
+            <span className="text-sm">Custom Prompts</span>
           </Link>
         </nav>
         <SheetFooter className="mt-auto">

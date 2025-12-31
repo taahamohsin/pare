@@ -87,7 +87,7 @@ export function ResumeUploadDialog({
                     <div>
                         <div className="flex items-center space-x-2">
                             <Label htmlFor="resume-file">Select File</Label>
-                            <span className="bg-amber-500 text-black px-2 py-1 rounded-lg text-xs flex gap-2">
+                            <span className="bg-amber-400 text-black px-2 py-1 rounded-lg text-xs flex gap-2">
                                 <Info className="h-4 w-4 flex" />
                                 <span>Files must be either PDF or DOCX and up to 5 MB</span>
                             </span>

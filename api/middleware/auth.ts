@@ -76,13 +76,26 @@ export function withOptionalAuth(
       }
     } catch (error) {
       // If auth was attempted but failed, we still treat as unauthenticated 
-      // unless we want to strictly enforce valid tokens if present.
-      // For now, let's just proceed as unauthenticated.
     }
 
     const authenticatedReq = req as AuthenticatedRequest;
     authenticatedReq.user = null;
-    authenticatedReq.supabase = null;
+
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase environment variables in auth middleware");
+      authenticatedReq.supabase = undefined;
+      // We don't error here, but subsequent usage of supabase might fail if it's undefined.
+      // However, we should probably try to be safe.
+      // If we are returning, the handler might expect supabase to be there.
+      // Let's create a dummy client or just let it fail later? 
+      // Better to fail gracefully if the handler needs it.
+    } else {
+      authenticatedReq.supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_ANON_KEY
+      );
+    }
+
     return await handler(authenticatedReq, res);
   };
 }

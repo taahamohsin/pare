@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ResumesRouteImport } from './routes/resumes'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as CustomPromptsRouteImport } from './routes/custom-prompts'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 
@@ -30,6 +31,11 @@ const ProfileRoute = ProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomPromptsRoute = CustomPromptsRouteImport.update({
+  id: '/custom-prompts',
+  path: '/custom-prompts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/custom-prompts': typeof CustomPromptsRoute
   '/profile': typeof ProfileRoute
   '/resumes': typeof ResumesRoute
   '/saved': typeof SavedRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/custom-prompts': typeof CustomPromptsRoute
   '/profile': typeof ProfileRoute
   '/resumes': typeof ResumesRoute
   '/saved': typeof SavedRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/custom-prompts': typeof CustomPromptsRoute
   '/profile': typeof ProfileRoute
   '/resumes': typeof ResumesRoute
   '/saved': typeof SavedRoute
@@ -65,14 +74,34 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile' | '/resumes' | '/saved' | '/auth/callback'
+  fullPaths:
+    | '/'
+    | '/custom-prompts'
+    | '/profile'
+    | '/resumes'
+    | '/saved'
+    | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile' | '/resumes' | '/saved' | '/auth/callback'
-  id: '__root__' | '/' | '/profile' | '/resumes' | '/saved' | '/auth/callback'
+  to:
+    | '/'
+    | '/custom-prompts'
+    | '/profile'
+    | '/resumes'
+    | '/saved'
+    | '/auth/callback'
+  id:
+    | '__root__'
+    | '/'
+    | '/custom-prompts'
+    | '/profile'
+    | '/resumes'
+    | '/saved'
+    | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CustomPromptsRoute: typeof CustomPromptsRoute
   ProfileRoute: typeof ProfileRoute
   ResumesRoute: typeof ResumesRoute
   SavedRoute: typeof SavedRoute
@@ -102,6 +131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/custom-prompts': {
+      id: '/custom-prompts'
+      path: '/custom-prompts'
+      fullPath: '/custom-prompts'
+      preLoaderRoute: typeof CustomPromptsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CustomPromptsRoute: CustomPromptsRoute,
   ProfileRoute: ProfileRoute,
   ResumesRoute: ResumesRoute,
   SavedRoute: SavedRoute,

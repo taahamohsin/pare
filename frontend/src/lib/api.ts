@@ -27,6 +27,16 @@ export interface Resume {
   updated_at: string;
 }
 
+export interface CustomPrompt {
+  id: string;
+  user_id: string | null;
+  name: string;
+  prompt_text: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 async function getAuthToken(): Promise<string | null> {
   const { data } = await supabase.auth.getSession();
   return data.session?.access_token || null;
@@ -302,4 +312,126 @@ export async function updateResume(id: string, payload: Partial<Resume>): Promis
   }
 
   return response.json();
+}
+
+export async function listCustomPrompts(): Promise<{ data: CustomPrompt[] }> {
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch("/api/custom-prompts", { headers });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to fetch custom prompts");
+  }
+
+  return response.json();
+}
+
+export async function createCustomPrompt(payload: {
+  name: string;
+  prompt_text: string;
+  is_default?: boolean;
+}): Promise<CustomPrompt> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch("/api/custom-prompts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to create custom prompt");
+  }
+
+  return response.json();
+}
+
+export async function updateCustomPrompt(
+  id: string,
+  payload: Partial<CustomPrompt>
+): Promise<CustomPrompt> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch(`/api/custom-prompts?id=${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to update custom prompt");
+  }
+
+  return response.json();
+}
+
+export async function deleteCustomPrompt(id: string): Promise<void> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch(`/api/custom-prompts?id=${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to delete custom prompt");
+  }
+}
+
+export async function getSystemDefaultPrompt(): Promise<CustomPrompt> {
+  const response = await fetch("/api/custom-prompts?default=true");
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to fetch default prompt");
+  }
+
+  return response.json();
+}
+
+export async function generateCoverLetter(data: {
+  jobTitle: string;
+  jobDescription: string;
+  resumeText: string;
+  promptOverride?: string;
+}): Promise<string> {
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch("/api/generate-cover-letter", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to generate cover letter");
+  }
+
+  return response.text();
 }

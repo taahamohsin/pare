@@ -12,7 +12,7 @@ interface CoverLetter {
     updated_at: string;
 }
 
-export default async function handler(
+export default async function handleListCoverLetters(
     req: VercelRequest,
     res: VercelResponse
 ) {
