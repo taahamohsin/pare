@@ -73,7 +73,7 @@ function Button({
           <TooltipTrigger asChild>
             <span tabIndex={0} className="inline-flex cursor-not-allowed">
               {/* We need to override pointer-events-none so the tooltip triggers */}
-              {React.cloneElement(buttonContent as React.ReactElement, { className: cn((buttonContent.props as any).className, "pointer-events-none") })}
+              {React.cloneElement(buttonContent as React.ReactElement<{ className?: string }>, { className: cn((buttonContent.props as any).className, "pointer-events-none") })}
             </span>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="bg-zinc-800 text-white border-zinc-700">

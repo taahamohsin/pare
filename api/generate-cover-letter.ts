@@ -15,17 +15,17 @@ async function handleGenerateCoverLetter(
       throw new Error("Missing required fields");
     }
 
-    // Resolve which prompt to use if no override provided
     if (!promptOverride) {
       const query = supabase!
         .from("custom_prompts")
         .select("prompt_text");
 
       if (user) {
-        // Logged in: Fetch user's default
+        // Logged in: Fetch user's default or system default
         const { data, error } = await query
-          .eq("user_id", user.id)
-          .eq("is_default", true)
+          .or(`user_id.is.null,and(user_id.eq.${user.id},is_default.eq.true)`)
+          .order("user_id", { ascending: true })
+          .limit(1)
           .single();
 
         if (error || !data) {
@@ -33,7 +33,6 @@ async function handleGenerateCoverLetter(
         }
         promptOverride = data.prompt_text;
       } else {
-        // Guest: Fetch global system default (user_id is NULL)
         const { data, error } = await query
           .is("user_id", null)
           .single();

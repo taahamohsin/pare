@@ -58,7 +58,6 @@ export default function CoverLetterForm() {
     const createMutation = useCreateCoverLetter();
     const { data: systemDefaultPrompt } = useSystemDefaultPrompt();
 
-    // Set initial default prompt when system default loads
     useEffect(() => {
         if (systemDefaultPrompt && !selectedPrompt) {
             setSelectedPrompt(systemDefaultPrompt);
@@ -191,7 +190,9 @@ export default function CoverLetterForm() {
                     />
                 </div>
                 <div className="flex flex-col gap-1.5 w-75">
+                    <Label htmlFor="customPrompt" className="mb-1">Prompt</Label>
                     <Button
+                        id="customPrompt"
                         variant="outline"
                         onClick={() => setShowCustomPromptDialog(true)}
                         disabled={generateMutation.isPending}
