@@ -1,10 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 
-export async function generateCoverLetter(jobTitle: string, jobDescription: string, resumeText: string, promptOverride: string) {
+export async function generateCoverLetter(
+  jobTitle: string,
+  jobDescription: string,
+  resumeText: string,
+  promptOverride: string
+): Promise<string> {
   const ai = new GoogleGenAI({});
 
   const date = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-  const finalPrompt = promptOverride
+
+  const processedPrompt = promptOverride
     .replace(/{jobTitle}/g, jobTitle)
     .replace(/{jobDescription}/g, jobDescription)
     .replace(/{resumeText}/g, resumeText)
@@ -12,7 +18,8 @@ export async function generateCoverLetter(jobTitle: string, jobDescription: stri
 
   const result = await ai.models.generateContent({
     model: "gemma-3-12b-it",
-    contents: finalPrompt
+    contents: processedPrompt
   });
+
   return result.text;
 }

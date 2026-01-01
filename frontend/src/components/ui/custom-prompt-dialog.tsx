@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, AlertCircle } from "lucide-react";
+import { Loader2, Plus, AlertCircle, Info } from "lucide-react";
 import { useCustomPrompts, useCreateCustomPrompt, useUpdateCustomPrompt, useDeleteCustomPrompt, useSystemDefaultPrompt } from "@/lib/useCustomPrompts";
 import { toast } from "sonner";
 import type { CustomPrompt } from "@/lib/api";
@@ -50,11 +50,6 @@ export function CustomPromptDialog({
         setName(prompt.name);
         setPromptText(prompt.prompt_text);
         setView("form");
-    };
-
-    const handleRead = (prompt: CustomPrompt) => {
-        setEditingPrompt(prompt);
-        setView("read");
     };
 
     const handleSubmit = async () => {
@@ -114,6 +109,7 @@ export function CustomPromptDialog({
                     </DialogDescription>
                 </DialogHeader>
 
+
                 <div className="flex-1 overflow-y-auto p-6 pt-0">
                     {!isAuthenticated ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
@@ -144,7 +140,6 @@ export function CustomPromptDialog({
                                 <PromptList
                                     prompts={prompts}
                                     onSelect={onSelectPrompt}
-                                    onRead={handleRead}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
                                     deletingPromptId={deletingPromptId}
@@ -163,6 +158,10 @@ export function CustomPromptDialog({
                         </div>
                     ) : (
                         <div className="space-y-6">
+                            <span className="flex items-center gap-2 w-full bg-amber-500 border-amber-500 border rounded-md px-2 py-1 text-zinc-500 text-sm">
+                                <Info className="h-4 w-4 flex text-black" />
+                                <p className="text-black">{`Be sure to include the placeholders {jobTitle}, {jobDescription} and {resumeText} in your prompt.`}</p>
+                            </span>
                             <div className="space-y-2">
                                 <Label htmlFor="prompt-name" className="text-zinc-700 text-xs uppercase tracking-wider font-semibold">
                                     Prompt Name

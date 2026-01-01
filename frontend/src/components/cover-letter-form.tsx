@@ -55,6 +55,10 @@ export default function CoverLetterForm() {
     const [promptOverride, setPromptOverride] = useState<string | undefined>(undefined);
     const [selectedPrompt, setSelectedPrompt] = useState<CustomPrompt | null>(null);
 
+    const applicantName = useMemo(() => {
+        return user?.user_metadata?.full_name || user?.identities?.[0]?.identity_data?.full_name || "Applicant";
+    }, [user]);
+
     const createMutation = useCreateCoverLetter();
     const { data: systemDefaultPrompt } = useSystemDefaultPrompt();
 
@@ -201,7 +205,7 @@ export default function CoverLetterForm() {
                         <div className="flex items-center gap-2 overflow-hidden">
                             <MessageSquareText className="h-4 w-4 shrink-0 text-slate-500 group-hover:text-slate-700" />
                             <div className="flex flex-col items-start text-xs text-left overflow-hidden">
-                                <span className="font-medium text-zinc-800 text-sm truncate max-w-[120px]">
+                                <span className="font-medium text-zinc-800 text-sm truncate max-w-full">
                                     {selectedPrompt?.name || (
                                         <div className="flex items-center gap-2">
                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -241,7 +245,7 @@ export default function CoverLetterForm() {
                             <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2">
                                 <CoverLetterActions
                                     content={coverLetter}
-                                    filename={jobTitle.replace(/\s+/g, "_")}
+                                    applicantName={applicantName}
                                     className="contents"
                                 />
                                 <TooltipProvider delayDuration={100}>

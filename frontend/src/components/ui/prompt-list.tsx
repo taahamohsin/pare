@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import type { CustomPrompt } from "@/lib/api";
 import { useMemo } from "react";
 
 interface PromptListProps {
     prompts: CustomPrompt[];
     onSelect?: (prompt: CustomPrompt) => void;
-    onRead: (prompt: CustomPrompt) => void;
     onEdit: (prompt: CustomPrompt) => void;
     onDelete: (id: string, e: React.MouseEvent) => void;
     deletingPromptId: string | null;
@@ -17,7 +16,6 @@ interface PromptListProps {
 export function PromptList({
     prompts,
     onSelect,
-    onRead,
     onEdit,
     onDelete,
     deletingPromptId,
@@ -81,7 +79,7 @@ export function PromptList({
                                 )}
                             {(hasCustomDefault ? prompt.is_default : prompt.user_id === null) && (
                                 <div className="ml-2">
-                                    <Badge className="h-5 bg-blue-500 hover:bg-blue-600 text-white px-2 py-0 border-none text-[10px] font-medium transition-colors">
+                                    <Badge className="h-5 bg-blue-600 hover:bg-blue-600 text-white px-2 py-0 border-none text-[10px] font-medium transition-colors">
                                         Default
                                     </Badge>
                                 </div>

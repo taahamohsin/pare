@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, Star } from "lucide-react";
+import { Info, Loader2, Plus, Star } from "lucide-react";
 import { useCustomPrompts, useCreateCustomPrompt, useUpdateCustomPrompt, useDeleteCustomPrompt, useSystemDefaultPrompt } from "@/lib/useCustomPrompts";
 import { toast } from "sonner";
 import type { CustomPrompt } from "@/lib/api";
@@ -152,7 +152,6 @@ export default function CustomPromptsPage() {
                                     <PromptList
                                         prompts={prompts}
                                         onSelect={handleSelectPrompt}
-                                        onRead={handleRead}
                                         onEdit={handleEdit}
                                         onDelete={handleDelete}
                                         deletingPromptId={deletingPromptId}
@@ -166,7 +165,10 @@ export default function CustomPromptsPage() {
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex-1" />
-                                    <h3 className="text-xl font-bold text-zinc-900">{editingPrompt.name}</h3>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-zinc-900">{editingPrompt.name}</h3>
+                                    </div>
+
                                     <div className="flex flex-1 items-center justify-end gap-1">
                                         <>
                                             <Button
@@ -201,6 +203,11 @@ export default function CustomPromptsPage() {
 
                         {view === "form" && (
                             <div className="space-y-6">
+                                <span className="flex items-center gap-2 w-full bg-amber-500 border-amber-500 border rounded-md px-2 py-1 text-zinc-500 text-sm">
+                                    <Info className="h-4 w-4 flex text-black" />
+                                    <p className="text-black">{`Be sure to include the placeholders {jobTitle}, {jobDescription} and {resumeText} in your prompt.`}</p>
+                                </span>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="prompt-name" className="text-zinc-700 text-xs uppercase tracking-wider font-semibold">
                                         Prompt Name
@@ -249,7 +256,7 @@ export default function CustomPromptsPage() {
                                     <Button
                                         variant="ghost"
                                         onClick={() => setView("list")}
-                                        className="text-zinc-600 hover:text-zinc-900 border border-zinc-200"
+                                        className="text-zinc-600 hover:text-zinc-900 border border-zinc-500"
                                     >
                                         Cancel
                                     </Button>

@@ -170,7 +170,6 @@ This project is open source and available under the MIT License.
 ## Planned Features
 
 - Support for other models/providers
-- Support for a custom prompt
 - Support for bringing your own API key
 
 

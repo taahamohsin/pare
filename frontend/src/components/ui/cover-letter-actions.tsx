@@ -8,11 +8,32 @@ import { toast } from "sonner";
 
 interface CoverLetterActionsProps {
     content: string;
-    filename: string;
+    applicantName: string;
     className?: string;
 }
 
-export default function CoverLetterActions({ content, filename, className = "" }: CoverLetterActionsProps) {
+// Utility function to sanitize filename
+function sanitizeFilename(name: string): string {
+    return name
+        .trim()
+        .replace(/\s+/g, ' ')
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+        .replace(/^[\s.]+|[\s.]+$/g, '')
+        .substring(0, 100)
+        || 'Unknown';
+}
+
+function generateSmartFilename(applicantName: string, extension: string): string {
+    const sanitizedApplicant = sanitizeFilename(applicantName);
+
+    return `${sanitizedApplicant} Cover Letter.${extension}`;
+}
+
+export default function CoverLetterActions({
+    content,
+    applicantName,
+    className = ""
+}: CoverLetterActionsProps) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -30,7 +51,9 @@ export default function CoverLetterActions({ content, filename, className = "" }
         doc.setFontSize(12);
         const splitText = doc.splitTextToSize(content, 180);
         doc.text(splitText, 15, 20);
-        doc.save(`${filename}_Cover_Letter.pdf`);
+
+        const filename = generateSmartFilename(applicantName, 'pdf');
+        doc.save(filename);
         toast.success("PDF downloaded!");
     };
 
@@ -59,7 +82,8 @@ export default function CoverLetterActions({ content, filename, className = "" }
         });
 
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, `${filename}_Cover_Letter.docx`);
+        const filename = generateSmartFilename(applicantName, 'docx');
+        saveAs(blob, filename);
         toast.success("DOCX downloaded!");
     };
 
