@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Eye, Pencil, Trash2 } from "lucide-react";
 import type { CustomPrompt } from "@/lib/api";
+import { useMemo } from "react";
 
 interface PromptListProps {
     prompts: CustomPrompt[];
@@ -30,6 +31,12 @@ export function PromptList({
         );
     }
 
+    const hasCustomDefault = useMemo(() => {
+        const defaultPrompt = prompts.find(prompt => prompt.is_default);
+        return defaultPrompt && defaultPrompt.user_id !== null;
+    }, [prompts]);
+
+
     return (
         <div className="grid gap-3">
             {prompts.map((prompt) => (
@@ -38,22 +45,13 @@ export function PromptList({
                     onClick={() => onSelect?.(prompt)}
                     className={`group relative flex flex-col p-3 bg-zinc-50 border border-zinc-200 rounded-md hover:bg-zinc-100 transition-all duration-200 ${onSelect ? 'cursor-pointer' : ''}`}
                 >
+
                     <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold text-zinc-900 transition-colors truncate">
                             {prompt.name}
                         </h4>
-                        <div className="flex items-center gap-1 group-hover:opacity-100 transition-opacity ml-2">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-zinc-400"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onRead(prompt);
-                                }}
-                            >
-                                <Eye className="h-4 w-4" />
-                            </Button>
+                        <div className="flex items-center group-hover:opacity-100 transition-opacity">
+
                             {
                                 prompt.user_id !== null && (
                                     <>
@@ -81,9 +79,9 @@ export function PromptList({
                                         </Button>
                                     </>
                                 )}
-                            {prompt.is_default && (
-                                <div className="top-2 right-2">
-                                    <Badge className="h-4 bg-blue-500 text-white px-2 py-0 border-none">
+                            {(hasCustomDefault ? prompt.is_default : prompt.user_id === null) && (
+                                <div className="ml-2">
+                                    <Badge className="h-5 bg-blue-500 hover:bg-blue-600 text-white px-2 py-0 border-none text-[10px] font-medium transition-colors">
                                         Default
                                     </Badge>
                                 </div>

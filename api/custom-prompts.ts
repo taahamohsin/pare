@@ -43,7 +43,6 @@ async function handleGet(req: AuthenticatedRequest, res: VercelResponse) {
         const { user, supabase } = req;
         const { id, default: isDefault } = req.query;
 
-        // Support both query param and path-based check for flexibility
         if (isDefault === "true" || req.url?.includes("/default")) {
             const { data, error } = await supabase!
                 .from("custom_prompts")
@@ -64,8 +63,6 @@ async function handleGet(req: AuthenticatedRequest, res: VercelResponse) {
                 .select("*")
                 .eq("id", id);
 
-            // If logged in, can see own prompts OR system prompts
-            // If not logged in, can only see system prompts
             if (user) {
                 query.or(`user_id.eq.${user.id},user_id.is.null`);
             } else {
@@ -115,11 +112,12 @@ async function handlePatch(req: AuthenticatedRequest, res: VercelResponse) {
         }
 
         if (is_default) {
-            // Unset previous default
+
             await supabase!
                 .from("custom_prompts")
                 .update({ is_default: false })
                 .eq("user_id", user!.id);
+
         }
 
         const { data, error } = await supabase!

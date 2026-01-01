@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus, AlertCircle } from "lucide-react";
+import { Loader2, Plus, Star } from "lucide-react";
 import { useCustomPrompts, useCreateCustomPrompt, useUpdateCustomPrompt, useDeleteCustomPrompt, useSystemDefaultPrompt } from "@/lib/useCustomPrompts";
 import { toast } from "sonner";
 import type { CustomPrompt } from "@/lib/api";
@@ -19,11 +19,14 @@ export default function CustomPromptsPage() {
     const [editingPrompt, setEditingPrompt] = useState<CustomPrompt | null>(null);
     const [name, setName] = useState("");
     const [promptText, setPromptText] = useState("");
+    const [isDefault, setIsDefault] = useState(false);
     const [deletingPromptId, setDeletingPromptId] = useState<string | null>(null);
 
     const { data: promptsData, isLoading: isLoadingPrompts } = useCustomPrompts(isAuthenticated);
     const prompts = promptsData?.data || [];
     const { data: systemDefaultPrompt } = useSystemDefaultPrompt();
+
+    const hasCustomDefault = useMemo(() => systemDefaultPrompt?.user_id !== null, [systemDefaultPrompt]);
 
     const createMutation = useCreateCustomPrompt();
     const updateMutation = useUpdateCustomPrompt();
@@ -59,12 +62,13 @@ export default function CustomPromptsPage() {
             if (editingPrompt) {
                 await updateMutation.mutateAsync({
                     id: editingPrompt.id,
-                    payload: { name, prompt_text: promptText },
+                    payload: { name, prompt_text: promptText, is_default: isDefault },
                 });
             } else {
                 await createMutation.mutateAsync({
                     name,
                     prompt_text: promptText,
+                    is_default: isDefault,
                 });
             }
             setView("list");
@@ -87,8 +91,18 @@ export default function CustomPromptsPage() {
         }
     };
 
-    // Use a no-op / redirect for main select, or map it to Read?
-    // In the page view, clicking the row should probably open it (Read view).
+    const handleSetDefault = async (prompt: CustomPrompt) => {
+        try {
+            await updateMutation.mutateAsync({
+                id: prompt.id,
+                payload: { is_default: true },
+            });
+            setEditingPrompt({ ...prompt, is_default: true });
+        } catch (error) {
+            // Error handled in mutation
+        }
+    };
+
     const handleSelectPrompt = (prompt: CustomPrompt) => {
         handleRead(prompt);
     };
@@ -124,7 +138,7 @@ export default function CustomPromptsPage() {
                                         disabled={createMutation.isPending || !isAuthenticated}
                                         disabledTooltip="You must be authenticated to create a custom prompt"
                                     >
-                                        <Plus className="h-4 w-4 mr-2" />
+                                        <Plus className="h-4 w-4" />
                                         Create New
                                     </Button>
                                 </div>
@@ -150,16 +164,32 @@ export default function CustomPromptsPage() {
 
                         {view === "read" && editingPrompt && (
                             <div className="space-y-6">
-                                <div className="flex justify-between items-start">
+                                <div className="flex items-center justify-between gap-2">
+                                    <div className="flex-1" />
                                     <h3 className="text-xl font-bold text-zinc-900">{editingPrompt.name}</h3>
-                                    {editingPrompt.user_id !== null && (
-                                        <Button
-                                            onClick={() => handleEdit(editingPrompt)}
-                                            className="bg-black text-white hover:bg-zinc-800"
-                                        >
-                                            Edit Prompt
-                                        </Button>
-                                    )}
+                                    <div className="flex flex-1 items-center justify-end gap-1">
+                                        <>
+                                            <Button
+                                                onClick={() => handleEdit(editingPrompt)}
+                                                className="bg-black text-white hover:bg-zinc-800"
+                                                disabled={editingPrompt.user_id === null}
+                                                disabledTooltip="You cannot edit the system default prompt"
+                                            >
+                                                Edit
+                                            </Button>
+                                            {!editingPrompt.is_default || (!hasCustomDefault && editingPrompt.user_id === null) && (
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => handleSetDefault(editingPrompt)}
+                                                    className="cursor-pointer border-slate-600 font-medium hover:bg-slate-100 !text-black"
+                                                    disabled={editingPrompt.is_default || updateMutation.isPending}
+                                                >
+                                                    <Star className="h-4 w-4" />
+                                                    Set as Default
+                                                </Button>
+                                            )}
+                                        </>
+                                    </div>
                                 </div>
                                 <div className="bg-zinc-50 border border-zinc-200 rounded-md p-6 overflow-y-auto max-h-[60vh]">
                                     <p className="text-sm text-zinc-600 leading-relaxed whitespace-pre-wrap italic">
@@ -205,12 +235,21 @@ export default function CustomPromptsPage() {
                                         className="min-h-[400px] bg-white border-zinc-200 resize-none leading-relaxed text-sm font-mono text-zinc-900"
                                     />
                                 </div>
+                                <div className="flex items-center justify-between max-w-[110px]">
+                                    <Label htmlFor="is_default">Set as Default</Label>
+                                    <input
+                                        id="is_default"
+                                        type="checkbox"
+                                        checked={isDefault}
+                                        onChange={(e) => setIsDefault(e.target.checked)}
+                                    />
+                                </div>
 
-                                <div className="flex justify-end gap-3 pt-4">
+                                <div className="flex justify-end gap-3 pt-4 sticky bottom-2">
                                     <Button
                                         variant="ghost"
                                         onClick={() => setView("list")}
-                                        className="text-zinc-600 hover:text-zinc-900"
+                                        className="text-zinc-600 hover:text-zinc-900 border border-zinc-200"
                                     >
                                         Cancel
                                     </Button>
@@ -230,6 +269,6 @@ export default function CustomPromptsPage() {
                     </CardContent>
                 </Card>
             </div>
-        </div>
+        </div >
     );
 }
