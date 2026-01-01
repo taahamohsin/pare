@@ -1,6 +1,6 @@
-# Cover Letter Generator
+# Pare
 
-An AI-powered cover letter generator built for software engineers. Upload your resume, paste a job description, and get a succint, well-crafted cover letter in seconds.
+Pare is an AI-powered cover letter generator built for software engineers. Upload your resume, paste a job description, and get a succint, well-crafted cover letter in seconds.
 
 ## Features
 
@@ -144,7 +144,7 @@ cover-letter-generator/
   - Uses proper formatting
   - Includes appropriate salutation and closing
   - Avoids markdown formatting for clean exports
-  - Is concise and to the point
+  - Actually sounds like a human
 
 ### Template Management
 - Save generated cover letters as templates

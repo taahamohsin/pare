@@ -58,12 +58,10 @@ export default function Navbar() {
                             />
                         </div>
                         <div className="flex flex-col justify-center sm:border-l border-zinc-800 sm:pl-2 md:pl-3">
-                            <p className="hidden sm:block text-[10px] text-zinc-500 font-medium leading-tight uppercase tracking-wider">
-                                AI Powered
-                            </p>
                             <h1 className="text-xs sm:text-sm md:text-base font-bold leading-tight tracking-tight text-zinc-100 whitespace-nowrap">
-                                Cover Letter Generator
+                                Pare
                             </h1>
+
                         </div>
                     </Link>
                 </div>
