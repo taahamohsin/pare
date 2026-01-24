@@ -1,175 +1,160 @@
 # Pare
 
-Pare is an AI-powered cover letter generator built for software engineers. Upload your resume, paste a job description, and get a succint, well-crafted cover letter in seconds.
+**AI-Powered Cover Letter Generation Platform**
 
-## Features
+A production-grade SaaS application that leverages Google's Gemini LLM to generate personalized, context-aware cover letters by analyzing resume content and job descriptions through sophisticated prompt engineering.
 
-- **AI-Powered Generation**: Uses Google's Gemini AI (gemma-3-12b-it) to create tailored cover letters based on your resume and job requirements
-- **Resume Parsing**: Automatically extracts text from PDF and DOCX resume files
-- **Multiple Export Formats**: Download your cover letter as PDF or DOCX
-- **Template Management**: Save, edit, and manage your cover letter templates
-- **GitHub Authentication**: Secure sign-in with GitHub OAuth
+[Live Demo](https://pare-one.vercel.app)
 
-## Tech Stack
+---
+
+## System Architecture
+
+```mermaid
+flowchart TB
+    subgraph Client["Client Layer"]
+        SPA["React 19 + TypeScript SPA"]
+        Router["TanStack Router"]
+        Query["TanStack Query"]
+        DocProc["Document Processing<br/>(PDF.js, Mammoth)"]
+    end
+
+    subgraph API["API Layer (Vercel Serverless)"]
+        Auth["Auth Middleware<br/>(JWT/OAuth)"]
+        Gen["Generation Pipeline"]
+        CRUD["CRUD Operations"]
+    end
+
+    subgraph Data["Data Layer"]
+        subgraph Supabase["Supabase"]
+            DB["PostgreSQL + RLS"]
+            OAuth["GitHub OAuth"]
+            Storage["File Storage<br/>(Signed URLs)"]
+        end
+        subgraph AI["AI/ML"]
+            Gemini["Google Gemini API"]
+            Prompts["Prompt Engineering"]
+        end
+    end
+
+    Client --> API
+    API --> Supabase
+    API --> AI
+```
+
+---
+
+## ML/AI Implementation
+
+```mermaid
+flowchart LR
+    subgraph Parse["Resume Parsing"]
+        P1["PDF/DOCX extraction"]
+        P2["Metadata parse"]
+    end
+
+    subgraph Prompt["Prompt Selection"]
+        PR1["User defaults"]
+        PR2["System prompts"]
+        PR3["Fallback chain"]
+    end
+
+    subgraph Context["Context Injection"]
+        C1["{jobTitle}"]
+        C2["{jobDescription}"]
+        C3["{resumeText}"]
+    end
+
+    subgraph LLM["Gemini API"]
+        L1["Rate limiting"]
+        L2["Error recovery"]
+    end
+
+    Parse --> Prompt --> Context --> LLM
+```
+
+| Feature | Implementation |
+|---------|---------------|
+| **Model** | Google Gemini `gemma-3-12b-it` - free-tier API with 32k context window, enabling zero-cost generation with full resume + job description context |
+| **Prompt Engineering** | Template-based system with dynamic variable injection |
+| **Custom Prompts** | User-defined templates with fallback chain resolution |
+| **Rate Limiting** | Graceful handling of API limits with user feedback |
+
+---
+
+## Technology Stack
 
 ### Frontend
-- **React** with TypeScript
-- **Vite** for fast development and building
-- **TanStack Router** for routing
-- **TanStack Query** for data fetching and state management
-- **Tailwind CSS** for styling
-- **shadcn/ui** for UI components
-- **Radix UI** for accessible component primitives
+| Technology | Purpose |
+|------------|---------|
+| React 19 + TypeScript | Type-safe component architecture |
+| Vite | Sub-second HMR, optimized builds |
+| TanStack Router | File-based routing with code-splitting |
+| TanStack Query | Server state synchronization |
+| Tailwind CSS + shadcn/ui | Utility-first styling with accessible components |
 
 ### Backend
-- **Vercel Serverless Functions** for API endpoints
-- **Supabase** for database and authentication
-- **Google Gemini AI** for cover letter generation
-- **Express** for serverless API structure
+| Technology | Purpose |
+|------------|---------|
+| Vercel Serverless | Edge-optimized, auto-scaling compute |
+| Express 5 + Zod | Request routing with runtime validation |
+| Google GenAI SDK | LLM API integration |
+| pdf-parse, mammoth | Document text extraction |
 
-### Libraries
-- **jsPDF** for PDF generation
-- **docx** for DOCX generation
-- **pdf.js** for PDF parsing
-- **mammoth** for DOCX parsing
-- **sonner** for toast notifications
+### Data Layer
+| Technology | Purpose |
+|------------|---------|
+| Supabase PostgreSQL | ACID-compliant storage with Row-Level Security |
+| Supabase Auth | GitHub OAuth with JWT tokens |
+| Supabase Storage | S3-compatible blob storage with signed URLs |
 
-## Getting Started
+---
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **AI Generation** | Context-aware cover letters using resume + job description analysis |
+| **Resume Parsing** | Automatic text extraction from PDF and DOCX formats |
+| **Custom Prompts** | User-defined prompt templates with variable injection |
+| **Multi-Format Export** | Download as PDF, DOCX, or copy to clipboard |
+| **Template Management** | Save, edit, and organize generated cover letters |
+| **Anonymous Mode** | Generate cover letters without authentication |
+
+---
+
+## Development
 
 ### Prerequisites
-
 - Node.js 18+ and Yarn
 - Supabase account
 - Google AI (Gemini) API key
-- GitHub OAuth App credentials
 
-### Environment Variables
+### Setup
 
-Create a `.env` file in the `frontend` directory:
-
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-Create a `.env` file in the `api` directory:
-
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-GEMINI_API_KEY=your_gemini_api_key
-```
-
-For the supabase credentials, please contact me at taahabinmohsin@hotmail.com if you'd like to contribute to this project.
-
-### Installation
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/taahabinmohsin/cover-letter-generator.git
-cd cover-letter-generator
-```
+# Install dependencies
+cd frontend && yarn install
+cd ../api && yarn install
 
-2. Install frontend dependencies:
-```bash
-cd frontend
-yarn install
-```
+# Start frontend dev server
+cd frontend && yarn dev
 
-3. Install API dependencies:
-```bash
-cd api
-yarn install
-```
-
-### Database Setup
-
-The database is already set up with the required table and policies in Supabase. No additional setup is required. However, the migrations used are documented under the `api/migrations` directory.
-
-### Development
-
-1. Start the frontend development server:
-```bash
-cd frontend
-yarn dev
-```
-
-2. For local API testing with Vercel CLI, from the root directory run:
-```bash
+# Start API with Vercel CLI (from root)
 vercel dev
 ```
 
-### Building for Production
 
-Build the frontend:
-```bash
-cd frontend
-yarn build
-```
+---
 
-### Deployment
+## Roadmap
 
-This project is configured for deployment on Vercel. Every push to the main branch will trigger a deployment.
+- [ ] Multi-provider LLM support (OpenAI, Anthropic)
+- [ ] Bring-your-own API key option
+- [ ] Browser extension for one-click generation
 
-The `vercel.json` configuration handles:
-- Frontend build from the `frontend` directory
-- API routes as serverless functions
-- Proper routing for SPA and API endpoints
-
-## Project Structure
-
-```
-cover-letter-generator/
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── lib/          # Utilities and hooks
-│   │   └── routes/       # Route components
-│   └── package.json
-├── api/                   # Serverless API functions
-│   ├── cover-letters.ts  # CRUD operations
-│   ├── generate-cover-letter.ts  # AI generation endpoint
-│   └── utils.ts          # Shared utilities
-└── vercel.json           # Vercel deployment config
-```
-
-## Features in Detail
-
-### Cover Letter Generation
-- Parses your resume (PDF or DOCX format)
-- Analyzes job requirements
-- Generates a professional cover letter that:
-  - Matches your experience to job requirements
-  - Uses proper formatting
-  - Includes appropriate salutation and closing
-  - Avoids markdown formatting for clean exports
-  - Actually sounds like a human
-
-### Template Management
-- Save generated cover letters as templates
-- Add custom names and descriptions
-- Edit saved templates
-- Delete templates you no longer need
-- View creation dates for easy tracking
-
-### Export Options
-- **PDF**: Clean, professional PDF format
-- **DOCX**: Editable Microsoft Word format
-- **Copy to Clipboard**: Quick copy for pasting anywhere
-- **Save as Template**: Save the cover letter as a template for future use (only available when logged in)
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+---
 
 ## License
 
-This project is open source and available under the MIT License.
-
-## Planned Features
-
-- Support for other models/providers
-- Support for bringing your own API key
-
-
+MIT License
