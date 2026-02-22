@@ -4,7 +4,7 @@
 
 A production-grade SaaS application that leverages Google's Gemini LLM to generate personalized, context-aware cover letters by analyzing resume content and job descriptions through sophisticated prompt engineering.
 
-[Live Demo](https://pare-one.vercel.app)
+[Live Demo](https://pare-eight-sage.vercel.app)
 
 ---
 
