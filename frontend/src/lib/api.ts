@@ -174,7 +174,7 @@ export async function getResume(id: string): Promise<Resume> {
   return response.json();
 }
 
-async function getUploadUrl(fileName: string): Promise<{ path: string; signedUrl: string; token: string }> {
+async function getUploadUrl(fileName: string): Promise<{ path: string; signedUrl: string; token: string; fileName: string }> {
   const token = await getAuthToken();
   if (!token) throw new Error("Not authenticated");
 
@@ -235,7 +235,7 @@ export async function uploadResume(
   }
 
   try {
-    const { path, token: uploadToken } = await getUploadUrl(file.name);
+    const { path, token: uploadToken, fileName: finalFileName } = await getUploadUrl(file.name);
 
     const { data, error } = await supabase
       .storage
@@ -254,7 +254,7 @@ export async function uploadResume(
       },
       body: JSON.stringify({
         file: {
-          filename: file.name,
+          filename: finalFileName,
           original_filename: file.name,
           file_size: file.size,
           file_type: file.type,
