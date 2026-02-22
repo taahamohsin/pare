@@ -12,7 +12,6 @@ interface ResumeUploadDialogProps {
     onOpenChange: (open: boolean) => void;
     onUploadSuccess?: (resume: Resume) => void;
     isAuthenticated: boolean;
-    existingFileNames: Set<string>;
 }
 
 export function ResumeUploadDialog({
@@ -20,25 +19,21 @@ export function ResumeUploadDialog({
     onOpenChange,
     onUploadSuccess,
     isAuthenticated,
-    existingFileNames,
 }: ResumeUploadDialogProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [setAsDefault, setSetAsDefault] = useState<boolean>(false);
 
     const { data: resumesData } = useResumes(undefined, undefined, isAuthenticated);
-    const resumes = resumesData?.data || [];
-    const hasDefaultResume = useMemo(() => resumes.length > 0 && resumes.some((r) => r.is_default), [resumes]);
+    const hasDefaultResume = useMemo(() => {
+        const resumes = resumesData?.data || [];
+        return resumes.length > 0 && resumes.some((r) => r.is_default)
+    }, [resumesData]);
     const isForcedDefault = !hasDefaultResume && isAuthenticated;
     const uploadMutation = useUploadResume();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
-        if (existingFileNames.has(file.name)) {
-            toast.error("File with this name already exists");
-            return;
-        }
 
         if (
             file.type !== "application/pdf" &&
@@ -72,7 +67,7 @@ export function ResumeUploadDialog({
             setSetAsDefault(false);
             onOpenChange(false);
             setSelectedFile(null);
-        } catch (error) {
+        } catch {
             // Error handled in mutation
         }
     };
