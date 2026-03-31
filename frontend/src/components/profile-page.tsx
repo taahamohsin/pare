@@ -2,6 +2,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2 } from "lucide-react";
+import ApiKeySettings from "@/components/api-key-settings";
 
 export default function ProfilePage() {
   const { user, loading } = useAuthContext();
@@ -44,7 +45,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-full min-w-full bg-black px-4 py-6 sm:py-8 md:py-12 flex items-center justify-center">
-      <div className="container mx-auto flex flex-col items-center justify-center">
+      <div className="container mx-auto flex flex-col items-center justify-center space-y-6">
         <Card className="w-full max-w-2xl bg-white border-zinc-200 text-black shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Account Information</CardTitle>
@@ -92,6 +93,10 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="w-full max-w-2xl">
+          <ApiKeySettings />
+        </div>
       </div>
     </div>
   );

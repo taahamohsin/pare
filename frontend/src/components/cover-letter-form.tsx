@@ -1,5 +1,5 @@
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,15 +8,24 @@ import { Label } from "@/components/ui/label";
 import { Sparkles, Loader2, Save, MessageSquareText, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
-import { generateCoverLetter as apiGenerateCoverLetter } from "@/lib/api";
-import type { CustomPrompt } from "@/lib/api";
+import { generateCoverLetter as apiGenerateCoverLetter, analyzeJobDescription } from "@/lib/api";
+import type { CustomPrompt, JDAnalysis } from "@/lib/api";
 import { useCreateCoverLetter } from "@/lib/useCoverLetters";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useSystemDefaultPrompt } from "@/lib/useCustomPrompts";
+import { useUserApiKeys } from "@/lib/useApiKeys";
+import { useOpenRouterModels } from "@/lib/useOpenRouter";
 import ContentCard from "@/components/ui/content-card";
 import CoverLetterActions from "@/components/ui/cover-letter-actions";
 import ResumeSelector from "@/components/ui/resume-selector";
 import { CustomPromptDialog } from "@/components/ui/custom-prompt-dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Dialog,
     DialogContent,
@@ -30,10 +39,11 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const PROCESSING_STEPS = {
-    'PARSE': 'Parsing resume and matching job requirements...',
-    'GENERATE': 'Generating cover letter...',
+    'ANALYZING': 'Analyzing job description with AI...',
+    'GENERATING': 'Generating tailored cover letter...',
     'FINISHING': 'Finishing up...'
 };
 
@@ -54,19 +64,44 @@ export default function CoverLetterForm() {
     const [templateDescription, setTemplateDescription] = useState("");
     const [promptOverride, setPromptOverride] = useState<string | undefined>(undefined);
     const [selectedPrompt, setSelectedPrompt] = useState<CustomPrompt | null>(null);
+    const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openrouter'>('gemini');
+    const [selectedModel, setSelectedModel] = useState<string | undefined>(undefined);
+
+    // Track if we've initialized the provider based on API keys
+    const hasInitializedProvider = useRef(false);
 
     const applicantName = useMemo(() => {
         return user?.user_metadata?.full_name || user?.identities?.[0]?.identity_data?.full_name || "Applicant";
     }, [user]);
 
+    const MIN_JD_LENGTH = 50;
+
     const createMutation = useCreateCoverLetter();
     const { data: systemDefaultPrompt } = useSystemDefaultPrompt();
+    const { data: apiKeysData } = useUserApiKeys();
+
+    const hasOpenRouterKey = apiKeysData?.data?.some(k => k.provider === 'openrouter' && k.is_active);
+
+    // Only fetch OpenRouter models if user has an API key
+    const { data: modelsData } = useOpenRouterModels(hasOpenRouterKey);
+    const models = modelsData?.data || [];
 
     useEffect(() => {
         if (systemDefaultPrompt && !selectedPrompt) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSelectedPrompt(systemDefaultPrompt);
         }
     }, [systemDefaultPrompt, selectedPrompt]);
+
+    // Auto-select OpenRouter provider if user has an API key (only on first load)
+    useEffect(() => {
+        if (hasOpenRouterKey && !hasInitializedProvider.current) {
+            hasInitializedProvider.current = true;
+            // This is a one-time initialization when API keys data first loads
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSelectedProvider('openrouter');
+        }
+    }, [hasOpenRouterKey]);
 
     const handleResumeSelected = (text: string, id: string, filename: string) => {
         setResumeText(text);
@@ -76,8 +111,22 @@ export default function CoverLetterForm() {
 
 
     const generateMutation = useMutation({
-        mutationFn: async (data: { jobTitle: string; jobDescription: string; resumeText: string; promptOverride?: string }) => {
-            return apiGenerateCoverLetter(data);
+        mutationFn: async (data: { jobTitle: string; jobDescription: string; resumeText: string; promptOverride?: string; model?: string }) => {
+            let jdAnalysis: JDAnalysis | undefined;
+
+            // Only run JD analysis for premium tier (OpenRouter) users
+            // Free tier (Gemma) users skip analysis to avoid using GEMINI_API_KEY
+            if (selectedProvider === 'openrouter') {
+                setStep(PROCESSING_STEPS.ANALYZING);
+                jdAnalysis = await analyzeJobDescription(data.jobDescription);
+            }
+
+            // Generate cover letter (with or without analysis depending on tier)
+            setStep(PROCESSING_STEPS.GENERATING);
+            return apiGenerateCoverLetter({
+                ...data,
+                jdAnalysis
+            });
         },
         onSuccess: (data) => {
             setCoverLetter(data);
@@ -91,20 +140,23 @@ export default function CoverLetterForm() {
     });
 
     const isFormReady: boolean = useMemo(() => {
-        return !!jobTitle && !!jobDescription && !!selectedResumeId && !generateMutation.isPending;
+        return !!jobTitle &&
+            !!jobDescription &&
+            jobDescription.trim().length >= MIN_JD_LENGTH &&
+            !!selectedResumeId &&
+            !generateMutation.isPending;
     }, [jobTitle, jobDescription, selectedResumeId, generateMutation.isPending]);
 
     const handleGenerate = () => {
         setCoverLetter("");
-        setStep(PROCESSING_STEPS.GENERATE);
-        setTimeout(() => {
-            setStep(prev => prev === PROCESSING_STEPS.GENERATE ? PROCESSING_STEPS.FINISHING : prev);
-        }, 2000);
+        setStep(PROCESSING_STEPS.ANALYZING);
         generateMutation.mutate({
             jobTitle,
             jobDescription,
             resumeText,
-            promptOverride
+            promptOverride,
+            // Only pass model if user explicitly selected OpenRouter provider
+            model: selectedProvider === 'openrouter' ? selectedModel : undefined
         });
     };
 
@@ -192,6 +244,17 @@ export default function CoverLetterForm() {
                         onChange={(e) => setJobDescription(e.target.value)}
                         disabled={generateMutation.isPending}
                     />
+                    <div className="flex justify-between items-center text-xs">
+                        <p className={`${jobDescription.trim().length < 50 && jobDescription.length > 0
+                            ? 'text-amber-600 font-medium'
+                            : 'text-muted-foreground'
+                            }`}>
+                            {jobDescription.trim().length < 50 && jobDescription.length > 0
+                                ? `Add ${50 - jobDescription.trim().length} more characters for AI analysis`
+                                : `${jobDescription.trim().length} characters`}
+                        </p>
+
+                    </div>
                 </div>
                 <div className="flex flex-col gap-1.5 w-75">
                     <Label htmlFor="customPrompt" className="mb-1">Prompt</Label>
@@ -217,6 +280,101 @@ export default function CoverLetterForm() {
                         </div>
                         <ChevronDown className="h-3 w-3 text-slate-400 ml-2 shrink-0" />
                     </Button>
+                </div>
+
+                <div className="space-y-4 border border-slate-200 rounded-lg p-4 bg-slate-50/50">
+                    <div className="space-y-3">
+                        <Label className="text-base font-semibold">AI Provider</Label>
+                        <RadioGroup
+                            value={selectedProvider}
+                            onValueChange={(value) => {
+                                setSelectedProvider(value as 'gemini' | 'openrouter');
+                                if (value === 'gemini') {
+                                    setSelectedModel(undefined);
+                                }
+                            }}
+                            disabled={generateMutation.isPending}
+                            className="space-y-3"
+                        >
+                            <div className="flex items-start space-x-3 space-y-0">
+                                <RadioGroupItem value="gemini" id="provider-gemini" className="mt-1" />
+                                <Label
+                                    htmlFor="provider-gemini"
+                                    className="font-normal cursor-pointer flex-1"
+                                >
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium">Free (Gemma)</span>
+                                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-medium">
+                                                No cost
+                                            </span>
+                                        </div>
+                                        <span className="text-sm text-muted-foreground mt-1">
+                                            Gemma 3 12B • No API key required
+                                        </span>
+                                    </div>
+                                </Label>
+                            </div>
+
+                            {hasOpenRouterKey && (
+                                <div className="flex items-start space-x-3 space-y-0">
+                                    <RadioGroupItem value="openrouter" id="provider-openrouter" className="mt-1" />
+                                    <Label
+                                        htmlFor="provider-openrouter"
+                                        className="font-normal cursor-pointer flex-1"
+                                    >
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium">Premium (OpenRouter)</span>
+                                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">
+                                                    Your API key
+                                                </span>
+                                            </div>
+                                            <span className="text-sm text-muted-foreground mt-1">
+                                                Analysis: Gemini Flash • Generation: Claude, GPT-4, etc.
+                                            </span>
+                                        </div>
+                                    </Label>
+                                </div>
+                            )}
+                        </RadioGroup>
+
+                        {!hasOpenRouterKey && (
+                            <p className="text-xs text-muted-foreground mt-2 pl-7">
+                                Want premium models?{" "}
+                                <a href="/profile" className="text-blue-600 hover:underline font-medium">
+                                    Add your OpenRouter API key
+                                </a>
+                            </p>
+                        )}
+                    </div>
+
+                    {selectedProvider === 'openrouter' && hasOpenRouterKey && (
+                        <div className="space-y-2 pl-7 pt-2 border-t border-slate-200">
+                            <Label htmlFor="model" className="text-sm font-medium">Select Model</Label>
+                            <Select
+                                value={selectedModel}
+                                onValueChange={setSelectedModel}
+                                disabled={generateMutation.isPending}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Claude 3.5 Sonnet (default)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {models.map((model) => (
+                                        <SelectItem key={model.id} value={model.id}>
+                                            <div className="flex flex-col">
+                                                <span>{model.name}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    ~${(parseFloat(model.pricing.prompt) * 1000).toFixed(3)}/1K tokens
+                                                </span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex justify-center sticky bottom-0 space-x-2 flex-wrap gap-2">

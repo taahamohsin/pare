@@ -408,11 +408,50 @@ export async function getSystemDefaultPrompt(): Promise<CustomPrompt> {
   return response.json();
 }
 
+// Job Description Analysis
+export interface JDAnalysis {
+  technical_skills: string[];
+  soft_skills: string[];
+  key_responsibilities: string[];
+  seniority_level: string;
+  company_culture_signals: string[];
+  tone_signals: string;
+  ats_keywords: string[];
+  required_experience_years?: string;
+  nice_to_have_skills: string[];
+}
+
+export async function analyzeJobDescription(jobDescription: string): Promise<JDAnalysis> {
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch("/api/analyze-job-description", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ jobDescription }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to analyze job description");
+  }
+
+  const result = await response.json();
+  return result.data;
+}
+
 export async function generateCoverLetter(data: {
   jobTitle: string;
   jobDescription: string;
   resumeText: string;
   promptOverride?: string;
+  model?: string;
+  jdAnalysis?: JDAnalysis;
 }): Promise<string> {
   const token = await getAuthToken();
   const headers: Record<string, string> = {
@@ -434,4 +473,93 @@ export async function generateCoverLetter(data: {
   }
 
   return response.text();
+}
+
+// User API Keys Management
+export interface UserApiKey {
+  id: string;
+  provider: 'openrouter' | 'gemini';
+  model_preference?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OpenRouterModel {
+  id: string;
+  name: string;
+  pricing: {
+    prompt: string;
+    completion: string;
+  };
+  context_length: number;
+}
+
+export async function getUserApiKeys(): Promise<{ data: UserApiKey[] }> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch("/api/user-settings/api-keys", {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to fetch API keys");
+  }
+
+  return response.json();
+}
+
+export async function createApiKey(payload: {
+  provider: string;
+  api_key: string;
+  model_preference?: string;
+}): Promise<{ data: UserApiKey; message: string }> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch("/api/user-settings/api-keys", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to save API key");
+  }
+
+  return response.json();
+}
+
+export async function deleteApiKey(id: string): Promise<{ success: boolean }> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch(`/api/user-settings/api-keys?id=${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to delete API key");
+  }
+
+  return response.json();
+}
+
+export async function getOpenRouterModels(): Promise<{ data: OpenRouterModel[] }> {
+  const response = await fetch("/api/openrouter/models");
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Failed to fetch OpenRouter models");
+  }
+
+  return response.json();
 }

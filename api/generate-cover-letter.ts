@@ -1,12 +1,12 @@
 import type { VercelResponse } from "@vercel/node";
-import { generateCoverLetter } from "./utils.js";
-import { AuthenticatedRequest, withOptionalAuth } from "./middleware/auth.js";
+import { generateCoverLetter, AIGenerationConfig } from "./utils.js";
+import { AuthenticatedRequest, withOptionalAuth, createAdminSupabase } from "./middleware/auth.js";
 
 async function handleGenerateCoverLetter(
   req: AuthenticatedRequest,
   res: VercelResponse
 ) {
-  const { jobTitle, jobDescription, resumeText } = req.body;
+  const { jobTitle, jobDescription, resumeText, model, jdAnalysis } = req.body;
   let { promptOverride } = req.body;
   const { user, supabase } = req;
 
@@ -44,11 +44,51 @@ async function handleGenerateCoverLetter(
       }
     }
 
+    // Fetch user's OpenRouter API key only if they want to use OpenRouter
+    // (indicated by providing a model parameter)
+    let aiConfig: AIGenerationConfig | undefined;
+
+    if (user && model) {
+      const { data: apiKeyData } = await supabase!
+        .from('user_api_keys')
+        .select('encrypted_api_key, model_preference')
+        .eq('user_id', user.id)
+        .eq('provider', 'openrouter')
+        .eq('is_active', true)
+        .single();
+
+      if (apiKeyData && apiKeyData.encrypted_api_key) {
+        // Decrypt the API key using admin client
+        const adminSupabase = createAdminSupabase();
+        const encryptionKey = process.env.ENCRYPTION_KEY;
+
+        if (!encryptionKey) {
+          console.error('ENCRYPTION_KEY not set in environment');
+        } else {
+          const { data: decryptedKey, error: decryptError } = await adminSupabase
+            .rpc('decrypt_api_key', {
+              encrypted_key: apiKeyData.encrypted_api_key,
+              key: encryptionKey
+            });
+
+          if (!decryptError && decryptedKey) {
+            aiConfig = {
+              provider: 'openrouter',
+              apiKey: decryptedKey,
+              model: model || apiKeyData.model_preference || 'anthropic/claude-3.5-sonnet'
+            };
+          }
+        }
+      }
+    }
+
     const result = await generateCoverLetter(
       jobTitle,
       jobDescription,
       resumeText,
-      promptOverride
+      promptOverride,
+      aiConfig,
+      jdAnalysis
     );
 
     return res.status(200).send(result);

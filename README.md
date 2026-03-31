@@ -65,9 +65,10 @@ flowchart LR
         C3["{resumeText}"]
     end
 
-    subgraph LLM["Gemini API"]
-        L1["Rate limiting"]
-        L2["Error recovery"]
+    subgraph LLM["Multi-Provider AI"]
+        L1["Free: Gemma 3"]
+        L2["Premium: Claude (OpenRouter)"]
+        L3["Analysis: Claude Haiku"]
     end
 
     Parse --> Prompt --> Context --> LLM
@@ -75,10 +76,12 @@ flowchart LR
 
 | Feature | Implementation |
 |---------|---------------|
-| **Model** | Google Gemini `gemma-3-12b-it` - free-tier API with 32k context window, enabling zero-cost generation with full resume + job description context |
+| **Free Tier** | Google Gemini `gemma-3-12b-it` - zero-cost generation with 32k context window |
+| **Premium Tier** | Bring-your-own OpenRouter API key + Claude 3.5 Sonnet (~$0.01-0.05/letter, user-paid) |
+| **Job Analysis** | Claude 3.5 Haiku for structured JD parsing (~$0.0001/analysis, premium only) |
 | **Prompt Engineering** | Template-based system with dynamic variable injection |
 | **Custom Prompts** | User-defined templates with fallback chain resolution |
-| **Rate Limiting** | Graceful handling of API limits with user feedback |
+| **API Key Security** | PostgreSQL pgcrypto encryption for user API keys |
 
 ---
 
@@ -110,16 +113,38 @@ flowchart LR
 
 ---
 
+## Pricing Tiers
+
+### Free Tier
+- **Model:** Gemma 3 (12B parameters)
+- **Cost:** $0 to users and platform
+- **Features:** Basic cover letter generation
+- **Requirements:** No API key needed
+
+### Premium Tier
+- **Model:** Claude 3.5 Sonnet via OpenRouter
+- **Cost:** ~$0.01-0.05 per cover letter (paid by user to OpenRouter)
+- **Features:**
+  - Advanced cover letter generation with Claude
+  - Job description analysis with Claude Haiku
+  - ATS keyword extraction
+  - Culture and tone analysis
+- **Requirements:** User's own OpenRouter API key
+
+---
+
 ## Key Features
 
 | Feature | Description |
 |---------|-------------|
 | **AI Generation** | Context-aware cover letters using resume + job description analysis |
+| **Two-Tier System** | Free tier (Gemma) and premium tier (bring-your-own OpenRouter key) |
+| **Job Description Analysis** | Structured parsing of JD for ATS keywords, skills, and culture signals (premium) |
 | **Resume Parsing** | Automatic text extraction from PDF and DOCX formats |
 | **Custom Prompts** | User-defined prompt templates with variable injection |
+| **API Key Management** | Secure encrypted storage of user API keys with PostgreSQL pgcrypto |
 | **Multi-Format Export** | Download as PDF, DOCX, or copy to clipboard |
 | **Template Management** | Save, edit, and organize generated cover letters |
-| **Anonymous Mode** | Generate cover letters without authentication |
 
 ---
 
@@ -128,7 +153,8 @@ flowchart LR
 ### Prerequisites
 - Node.js 18+ and Yarn
 - Supabase account
-- Google AI (Gemini) API key
+- Google AI (Gemini) API key (optional - for free tier only)
+- OpenRouter API key (optional - users bring their own for premium tier)
 
 ### Setup
 
@@ -149,9 +175,11 @@ vercel dev
 
 ## Roadmap
 
-- [ ] Multi-provider LLM support (OpenAI, Anthropic)
-- [ ] Bring-your-own API key option
+- [x] Multi-provider LLM support (OpenRouter with Claude)
+- [x] Bring-your-own API key option
+- [ ] Resume tailoring feature (see plan file)
 - [ ] Browser extension for one-click generation
+- [ ] Additional providers (OpenAI, direct Anthropic)
 
 ---
 
